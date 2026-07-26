@@ -34,6 +34,7 @@ import siteSettingsRoutes from './routes/siteSettingsRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
 import statsRoutes from './routes/statsRoutes.js';
 import activityLogRoutes from './routes/activityLogRoutes.js';
+import seedRoutes from './routes/seedRoutes.js';
 
 await connectDB();
 
@@ -74,6 +75,7 @@ app.use('/api/settings', siteSettingsRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/stats', statsRoutes);
 app.use('/api/activity-logs', activityLogRoutes);
+app.use('/api/seed', seedRoutes);
 
 app.get('/api/health', (req, res) => {
   res.status(200).json({ success: true, message: 'Joyful Crotchets API is running' });
