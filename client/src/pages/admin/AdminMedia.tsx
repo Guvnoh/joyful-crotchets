@@ -55,8 +55,8 @@ export default function AdminMedia() {
   const uploadMutation = useMutation({
     mutationFn: async (file: File) => {
       const formData = new FormData()
-      formData.append('file', file)
-      const { data } = await api.post('/media/upload', formData, {
+      formData.append('image', file)
+      const { data } = await api.post('/upload/image', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       })
       return data.data
@@ -69,8 +69,8 @@ export default function AdminMedia() {
   })
 
   const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      await api.delete(`/media/${id}`)
+    mutationFn: async (publicId: string) => {
+      await api.delete('/upload/image', { data: { publicId } })
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-media'] })
