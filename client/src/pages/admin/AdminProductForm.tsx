@@ -194,7 +194,9 @@ export default function AdminProductForm() {
       for (const file of Array.from(files)) {
         formData.append('images', file)
       }
-      const { data: res } = await api.post('/upload/images', formData)
+      const { data: res } = await api.post('/upload/images', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
       const uploaded = res.data.map((img: any) => ({
         url: img.url,
         publicId: img.publicId,
