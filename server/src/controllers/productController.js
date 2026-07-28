@@ -12,6 +12,7 @@ export const getProducts = async (req, res, next) => {
       maxPrice,
       search,
       sort = '-createdAt',
+      isPublished,
       isFeatured,
       isBestSeller,
       isNewArrival,
@@ -19,7 +20,14 @@ export const getProducts = async (req, res, next) => {
       tags,
     } = req.query;
 
-    const query = { isActive: true, isPublished: true };
+    const isAdmin = req.user && req.user.role === 'admin';
+    const query = { isActive: true };
+
+    if (isAdmin && isPublished !== undefined) {
+      query.isPublished = isPublished === 'true';
+    } else {
+      query.isPublished = true;
+    }
 
     if (category) query.category = category;
     if (isFeatured) query.isFeatured = isFeatured === 'true';
