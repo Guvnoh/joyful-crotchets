@@ -1,76 +1,90 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
-import { Home, SlidersHorizontal, X, LayoutGrid, ChevronLeft, ChevronRight, PackageOpen } from 'lucide-react'
-import { useProducts } from '@/hooks/useProducts'
-import { useCategories } from '@/hooks/useCategories'
-import { ProductCard } from '@/components/common/ProductCard'
-import { FilterSidebar } from '@/components/shop/FilterSidebar'
-import { SortSelect, type SortOption } from '@/components/shop/SortSelect'
-import { Button } from '@/components/ui/button'
-import { Skeleton } from '@/components/ui/skeleton'
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
-import { cn } from '@/lib/utils'
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { Link, useSearchParams } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Home,
+  SlidersHorizontal,
+  X,
+  LayoutGrid,
+  ChevronLeft,
+  ChevronRight,
+  PackageOpen,
+} from "lucide-react";
+import { useProducts } from "@/hooks/useProducts";
+import { useCategories } from "@/hooks/useCategories";
+import { ProductCard } from "@/components/common/ProductCard";
+import { FilterSidebar } from "@/components/shop/FilterSidebar";
+import { SortSelect, type SortOption } from "@/components/shop/SortSelect";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { cn } from "@/lib/utils";
 
 interface FilterState {
-  categories: string[]
-  minPrice: string
-  maxPrice: string
-  inStock: boolean
+  categories: string[];
+  minPrice: string;
+  maxPrice: string;
+  inStock: boolean;
 }
 
-const ITEMS_PER_PAGE = 12
+const ITEMS_PER_PAGE = 12;
 
 export default function Shop() {
-  const [searchParams, setSearchParams] = useSearchParams()
-  const [viewColumns, setViewColumns] = useState<2 | 3 | 4>(3)
-  const [isFilterOpen, setIsFilterOpen] = useState(false)
-  const { data: categories = [] } = useCategories()
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [viewColumns, setViewColumns] = useState<2 | 3 | 4>(3);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const { data: categories = [] } = useCategories();
 
-  const categorySlug = searchParams.get('category')
+  const categorySlug = searchParams.get("category");
 
   const resolvedCategoryId = useMemo(() => {
-    if (!categorySlug) return null
-    const match = categories.find((c) => c.slug === categorySlug || c._id === categorySlug)
-    return match?._id || null
-  }, [categorySlug, categories])
+    if (!categorySlug) return null;
+    const match = categories.find(
+      (c) => c.slug === categorySlug || c._id === categorySlug,
+    );
+    return match?._id || null;
+  }, [categorySlug, categories]);
 
   // Read filters from URL
   const [filters, setFilters] = useState<FilterState>({
     categories: resolvedCategoryId ? [resolvedCategoryId] : [],
-    minPrice: searchParams.get('minPrice') || '',
-    maxPrice: searchParams.get('maxPrice') || '',
-    inStock: searchParams.get('inStock') === 'true',
-  })
+    minPrice: searchParams.get("minPrice") || "",
+    maxPrice: searchParams.get("maxPrice") || "",
+    inStock: searchParams.get("inStock") === "true",
+  });
 
   // Sync filters when resolved category changes
   useEffect(() => {
-    if (resolvedCategoryId && !filters.categories.includes(resolvedCategoryId)) {
-      setFilters((prev) => ({ ...prev, categories: [resolvedCategoryId] }))
+    if (
+      resolvedCategoryId &&
+      !filters.categories.includes(resolvedCategoryId)
+    ) {
+      setFilters((prev) => ({ ...prev, categories: [resolvedCategoryId] }));
     } else if (!categorySlug && filters.categories.length > 0) {
-      setFilters((prev) => ({ ...prev, categories: [] }))
+      setFilters((prev) => ({ ...prev, categories: [] }));
     }
-  }, [resolvedCategoryId, categorySlug])
+  }, [resolvedCategoryId, categorySlug]);
 
-  const currentPage = parseInt(searchParams.get('page') || '1', 10)
-  const searchQuery = searchParams.get('search') || ''
-  const sortValue = (searchParams.get('sort') || 'newest') as SortOption
+  const currentPage = parseInt(searchParams.get("page") || "1", 10);
+  const searchQuery = searchParams.get("search") || "";
+  const sortValue = (searchParams.get("sort") || "newest") as SortOption;
 
   // Sync URL params
   const updateSearchParams = useCallback(
     (newFilters: FilterState, page: number, sort: SortOption) => {
-      const params = new URLSearchParams()
-      if (newFilters.categories.length > 0) params.set('category', newFilters.categories[0])
-      if (searchQuery) params.set('search', searchQuery)
-      if (sort !== 'newest') params.set('sort', sort)
-      if (page > 1) params.set('page', String(page))
-      if (newFilters.minPrice) params.set('minPrice', newFilters.minPrice)
-      if (newFilters.maxPrice) params.set('maxPrice', newFilters.maxPrice)
-      if (newFilters.inStock) params.set('inStock', 'true')
-      setSearchParams(params, { replace: true })
+      const params = new URLSearchParams();
+      if (newFilters.categories.length > 0)
+        params.set("category", newFilters.categories[0]);
+      if (searchQuery) params.set("search", searchQuery);
+      if (sort !== "newest") params.set("sort", sort);
+      if (page > 1) params.set("page", String(page));
+      if (newFilters.minPrice) params.set("minPrice", newFilters.minPrice);
+      if (newFilters.maxPrice) params.set("maxPrice", newFilters.maxPrice);
+      if (newFilters.inStock) params.set("inStock", "true");
+      setSearchParams(params, { replace: true });
     },
-    [searchQuery, setSearchParams]
-  )
+    [searchQuery, setSearchParams],
+  );
 
   // Build API filters
   const apiFilters = {
@@ -78,56 +92,78 @@ export default function Shop() {
     limit: ITEMS_PER_PAGE,
     category: filters.categories.length > 0 ? filters.categories[0] : undefined,
     search: searchQuery || undefined,
-    sort: sortValue === 'newest' ? '-createdAt' : sortValue === 'price_asc' ? 'price' : sortValue === 'price_desc' ? '-price' : sortValue === 'name_asc' ? 'name' : '-sold',
+    sort:
+      sortValue === "newest"
+        ? "-createdAt"
+        : sortValue === "price_asc"
+          ? "price"
+          : sortValue === "price_desc"
+            ? "-price"
+            : sortValue === "name_asc"
+              ? "name"
+              : "-sold",
     minPrice: filters.minPrice ? Number(filters.minPrice) : undefined,
     maxPrice: filters.maxPrice ? Number(filters.maxPrice) : undefined,
     inStock: filters.inStock || undefined,
-  }
+  };
 
-  const { data, isLoading, isFetching } = useProducts(apiFilters)
-  const products = data?.data || []
-  const pagination = data?.pagination
-  const totalPages = pagination?.pages || 1
+  const { data, isLoading, isFetching } = useProducts(apiFilters);
+  const products = data?.data || [];
+  const pagination = data?.pagination;
+  const totalPages = pagination?.pages || 1;
 
   const handleFilterChange = (newFilters: FilterState) => {
-    setFilters(newFilters)
-    updateSearchParams(newFilters, 1, sortValue)
-  }
+    setFilters(newFilters);
+    updateSearchParams(newFilters, 1, sortValue);
+  };
 
   const handleSortChange = (sort: SortOption) => {
-    updateSearchParams(filters, currentPage, sort)
-  }
+    updateSearchParams(filters, currentPage, sort);
+  };
 
   const handlePageChange = (page: number) => {
-    updateSearchParams(filters, page, sortValue)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-  }
+    updateSearchParams(filters, page, sortValue);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   const clearAllFilters = () => {
-    const cleared: FilterState = { categories: [], minPrice: '', maxPrice: '', inStock: false }
-    setFilters(cleared)
-    updateSearchParams(cleared, 1, sortValue)
-  }
+    const cleared: FilterState = {
+      categories: [],
+      minPrice: "",
+      maxPrice: "",
+      inStock: false,
+    };
+    setFilters(cleared);
+    updateSearchParams(cleared, 1, sortValue);
+  };
 
-  const hasActiveFilters = filters.categories.length > 0 || filters.minPrice || filters.maxPrice || filters.inStock
+  const hasActiveFilters =
+    filters.categories.length > 0 ||
+    filters.minPrice ||
+    filters.maxPrice ||
+    filters.inStock;
 
   // Generate page numbers
   const getPageNumbers = () => {
-    const pages: (number | string)[] = []
-    const maxVisible = 5
+    const pages: (number | string)[] = [];
+    const maxVisible = 5;
     if (totalPages <= maxVisible) {
-      for (let i = 1; i <= totalPages; i++) pages.push(i)
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
     } else {
-      pages.push(1)
-      if (currentPage > 3) pages.push('...')
-      for (let i = Math.max(2, currentPage - 1); i <= Math.min(totalPages - 1, currentPage + 1); i++) {
-        pages.push(i)
+      pages.push(1);
+      if (currentPage > 3) pages.push("...");
+      for (
+        let i = Math.max(2, currentPage - 1);
+        i <= Math.min(totalPages - 1, currentPage + 1);
+        i++
+      ) {
+        pages.push(i);
       }
-      if (currentPage < totalPages - 2) pages.push('...')
-      pages.push(totalPages)
+      if (currentPage < totalPages - 2) pages.push("...");
+      pages.push(totalPages);
     }
-    return pages
-  }
+    return pages;
+  };
 
   return (
     <div className="min-h-screen bg-ivory">
@@ -139,17 +175,12 @@ export default function Shop() {
             animate={{ opacity: 1, y: 0 }}
             className="text-center"
           >
-            <nav className="flex items-center justify-center gap-2 text-sm text-cream/70 mb-4">
-              <Link to="/" className="hover:text-gold transition-colors flex items-center gap-1">
-                <Home className="h-3.5 w-3.5" />
-                Home
-              </Link>
-              <span className="text-cream/40">/</span>
-              <span className="text-gold">Shop</span>
-            </nav>
-            <h1 className="font-display text-4xl md:text-5xl font-bold text-cream">Our Collection</h1>
+            <h1 className="font-display text-4xl md:text-5xl font-bold text-cream mt-5">
+              Our Collection
+            </h1>
             <p className="text-cream/70 mt-3 max-w-xl mx-auto">
-              Discover our handcrafted crochet pieces, each made with love and attention to detail
+              Discover our handcrafted crochet pieces, each made with love and
+              attention to detail
             </p>
           </motion.div>
         </div>
@@ -176,12 +207,18 @@ export default function Shop() {
                 {/* Mobile Filter Trigger */}
                 <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
                   <SheetTrigger asChild>
-                    <Button variant="outline" className="lg:hidden border-sand/50">
+                    <Button
+                      variant="outline"
+                      className="lg:hidden border-sand/50"
+                    >
                       <SlidersHorizontal className="mr-2 h-4 w-4" />
                       Filters
                       {hasActiveFilters && (
                         <span className="ml-2 h-5 w-5 rounded-full bg-gold text-white text-xs flex items-center justify-center">
-                          {filters.categories.length + (filters.minPrice ? 1 : 0) + (filters.maxPrice ? 1 : 0) + (filters.inStock ? 1 : 0)}
+                          {filters.categories.length +
+                            (filters.minPrice ? 1 : 0) +
+                            (filters.maxPrice ? 1 : 0) +
+                            (filters.inStock ? 1 : 0)}
                         </span>
                       )}
                     </Button>
@@ -201,7 +238,13 @@ export default function Shop() {
                   {isLoading ? (
                     <span className="inline-block h-4 w-32 bg-beige animate-pulse rounded" />
                   ) : (
-                    <>Showing <span className="font-semibold text-chocolate">{products.length}</span> of {pagination?.total || 0} products</>
+                    <>
+                      Showing{" "}
+                      <span className="font-semibold text-chocolate">
+                        {products.length}
+                      </span>{" "}
+                      of {pagination?.total || 0} products
+                    </>
                   )}
                 </p>
 
@@ -220,11 +263,16 @@ export default function Shop() {
                       key={cols}
                       onClick={() => setViewColumns(cols as 2 | 3 | 4)}
                       className={cn(
-                        'p-1.5 rounded transition-colors',
-                        viewColumns === cols ? 'bg-gold text-white' : 'text-mocha hover:text-chocolate'
+                        "p-1.5 rounded transition-colors",
+                        viewColumns === cols
+                          ? "bg-gold text-white"
+                          : "text-mocha hover:text-chocolate",
                       )}
                     >
-                      <LayoutGrid className="h-4 w-4" style={{ width: `${cols * 5}px` }} />
+                      <LayoutGrid
+                        className="h-4 w-4"
+                        style={{ width: `${cols * 5}px` }}
+                      />
                     </button>
                   ))}
                 </div>
@@ -236,20 +284,31 @@ export default function Shop() {
               <div className="flex flex-wrap items-center gap-2 mb-6">
                 <span className="text-xs text-mocha">Active filters:</span>
                 {filters.categories.map((catId) => {
-                  const cat = categories.find((c) => c._id === catId)
+                  const cat = categories.find((c) => c._id === catId);
                   return (
-                    <span key={catId} className="inline-flex items-center gap-1 rounded-full bg-gold/10 px-3 py-1 text-xs text-gold font-medium">
-                      {cat?.name || 'Category'}
-                      <button onClick={() => handleFilterChange({ ...filters, categories: [] })}>
+                    <span
+                      key={catId}
+                      className="inline-flex items-center gap-1 rounded-full bg-gold/10 px-3 py-1 text-xs text-gold font-medium"
+                    >
+                      {cat?.name || "Category"}
+                      <button
+                        onClick={() =>
+                          handleFilterChange({ ...filters, categories: [] })
+                        }
+                      >
                         <X className="h-3 w-3" />
                       </button>
                     </span>
-                  )
+                  );
                 })}
                 {filters.minPrice && (
                   <span className="inline-flex items-center gap-1 rounded-full bg-gold/10 px-3 py-1 text-xs text-gold font-medium">
                     Min: ₦{filters.minPrice}
-                    <button onClick={() => handleFilterChange({ ...filters, minPrice: '' })}>
+                    <button
+                      onClick={() =>
+                        handleFilterChange({ ...filters, minPrice: "" })
+                      }
+                    >
                       <X className="h-3 w-3" />
                     </button>
                   </span>
@@ -257,7 +316,11 @@ export default function Shop() {
                 {filters.maxPrice && (
                   <span className="inline-flex items-center gap-1 rounded-full bg-gold/10 px-3 py-1 text-xs text-gold font-medium">
                     Max: ₦{filters.maxPrice}
-                    <button onClick={() => handleFilterChange({ ...filters, maxPrice: '' })}>
+                    <button
+                      onClick={() =>
+                        handleFilterChange({ ...filters, maxPrice: "" })
+                      }
+                    >
                       <X className="h-3 w-3" />
                     </button>
                   </span>
@@ -265,7 +328,11 @@ export default function Shop() {
                 {filters.inStock && (
                   <span className="inline-flex items-center gap-1 rounded-full bg-gold/10 px-3 py-1 text-xs text-gold font-medium">
                     In Stock
-                    <button onClick={() => handleFilterChange({ ...filters, inStock: false })}>
+                    <button
+                      onClick={() =>
+                        handleFilterChange({ ...filters, inStock: false })
+                      }
+                    >
                       <X className="h-3 w-3" />
                     </button>
                   </span>
@@ -281,12 +348,16 @@ export default function Shop() {
 
             {/* Loading Skeletons */}
             {isLoading ? (
-              <div className={cn(
-                'grid gap-6',
-                viewColumns === 2 && 'grid-cols-1 sm:grid-cols-2',
-                viewColumns === 3 && 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3',
-                viewColumns === 4 && 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4',
-              )}>
+              <div
+                className={cn(
+                  "grid gap-6",
+                  viewColumns === 2 && "grid-cols-1 sm:grid-cols-2",
+                  viewColumns === 3 &&
+                    "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3",
+                  viewColumns === 4 &&
+                    "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4",
+                )}
+              >
                 {[...Array(ITEMS_PER_PAGE)].map((_, i) => (
                   <div key={i} className="space-y-4">
                     <Skeleton className="aspect-square rounded-2xl" />
@@ -306,9 +377,12 @@ export default function Shop() {
                 <div className="w-24 h-24 rounded-full bg-beige/50 flex items-center justify-center mx-auto mb-6">
                   <PackageOpen className="h-12 w-12 text-mocha/40" />
                 </div>
-                <h3 className="font-display text-2xl font-semibold text-chocolate mb-2">No products found</h3>
+                <h3 className="font-display text-2xl font-semibold text-chocolate mb-2">
+                  No products found
+                </h3>
                 <p className="text-mocha mb-6 max-w-md mx-auto">
-                  We couldn't find any products matching your filters. Try adjusting your search or browse our full collection.
+                  We couldn't find any products matching your filters. Try
+                  adjusting your search or browse our full collection.
                 </p>
                 <div className="flex items-center justify-center gap-4">
                   <Button
@@ -318,7 +392,10 @@ export default function Shop() {
                     Clear Filters
                   </Button>
                   <Link to="/">
-                    <Button variant="outline" className="border-gold/30 text-chocolate hover:bg-gold hover:text-white">
+                    <Button
+                      variant="outline"
+                      className="border-gold/30 text-chocolate hover:bg-gold hover:text-white"
+                    >
                       Back to Home
                     </Button>
                   </Link>
@@ -326,15 +403,23 @@ export default function Shop() {
               </motion.div>
             ) : (
               /* Product Grid */
-              <div className={cn(
-                'grid gap-6',
-                viewColumns === 2 && 'grid-cols-1 sm:grid-cols-2',
-                viewColumns === 3 && 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3',
-                viewColumns === 4 && 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4',
-              )}>
+              <div
+                className={cn(
+                  "grid gap-6",
+                  viewColumns === 2 && "grid-cols-1 sm:grid-cols-2",
+                  viewColumns === 3 &&
+                    "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3",
+                  viewColumns === 4 &&
+                    "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4",
+                )}
+              >
                 <AnimatePresence mode="wait">
                   {products.map((product, index) => (
-                    <ProductCard key={product._id} product={product} index={index} />
+                    <ProductCard
+                      key={product._id}
+                      product={product}
+                      index={index}
+                    />
                   ))}
                 </AnimatePresence>
               </div>
@@ -353,26 +438,28 @@ export default function Shop() {
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
 
-                {getPageNumbers().map((page, index) => (
-                  typeof page === 'number' ? (
+                {getPageNumbers().map((page, index) =>
+                  typeof page === "number" ? (
                     <Button
                       key={index}
-                      variant={currentPage === page ? 'default' : 'outline'}
+                      variant={currentPage === page ? "default" : "outline"}
                       size="sm"
                       onClick={() => handlePageChange(page)}
                       className={cn(
-                        'min-w-[36px]',
+                        "min-w-[36px]",
                         currentPage === page
-                          ? 'bg-gold text-white hover:bg-gold/90'
-                          : 'border-sand/50 text-chocolate hover:bg-gold hover:text-white'
+                          ? "bg-gold text-white hover:bg-gold/90"
+                          : "border-sand/50 text-chocolate hover:bg-gold hover:text-white",
                       )}
                     >
                       {page}
                     </Button>
                   ) : (
-                    <span key={index} className="px-2 text-mocha">...</span>
-                  )
-                ))}
+                    <span key={index} className="px-2 text-mocha">
+                      ...
+                    </span>
+                  ),
+                )}
 
                 <Button
                   variant="outline"
@@ -389,5 +476,5 @@ export default function Shop() {
         </div>
       </div>
     </div>
-  )
+  );
 }

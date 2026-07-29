@@ -3,20 +3,26 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useForm, useFieldArray } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   ArrowLeft,
+  ArrowRight,
   Save,
   Upload,
   X,
   Plus,
-  Loader2,
   Image as ImageIcon,
   Trash2,
-  GripVertical,
   RefreshCw,
+  Check,
+  Info,
+  Package,
+  DollarSign,
+  Palette,
+  Settings,
+  Eye,
 } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -32,7 +38,6 @@ import {
 import { Skeleton } from '@/components/ui/skeleton'
 import { useProduct, useCreateProduct, useUpdateProduct } from '@/hooks/useProducts'
 import { useCategories } from '@/hooks/useCategories'
-import { slugify, generateOrderNumber } from '@/lib/utils'
 import api from '@/services/api'
 import toast from 'react-hot-toast'
 
@@ -60,8 +65,8 @@ const productSchema = z.object({
   careInstructions: z.string().optional(),
   colors: z.preprocess(
     (colors) => {
-      if (!colors || !Array.isArray(colors)) return colors;
-      return colors.filter((c: any) => c && c.name && String(c.name).trim() !== '');
+      if (!colors || !Array.isArray(colors)) return colors
+      return colors.filter((c: any) => c && c.name && String(c.name).trim() !== '')
     },
     z.array(z.object({
       name: z.string().min(1),
@@ -71,8 +76,8 @@ const productSchema = z.object({
   ),
   sizes: z.preprocess(
     (sizes) => {
-      if (!sizes || !Array.isArray(sizes)) return sizes;
-      return sizes.filter((s: any) => s && s.name && String(s.name).trim() !== '');
+      if (!sizes || !Array.isArray(sizes)) return sizes
+      return sizes.filter((s: any) => s && s.name && String(s.name).trim() !== '')
     },
     z.array(z.object({
       name: z.string().min(1, 'Size name is required'),
@@ -98,6 +103,62 @@ const productSchema = z.object({
 
 type ProductFormData = z.infer<typeof productSchema>
 
+const STEPS = [
+  { id: 'basic', label: 'Basic Info', icon: Package, description: 'Product name, description, and category' },
+  { id: 'pricing', label: 'Pricing & Stock', icon: DollarSign, description: 'Set your price, costs, and inventory' },
+  { id: 'media', label: 'Images', icon: ImageIcon, description: 'Upload product photos' },
+  { id: 'variants', label: 'Variants', icon: Palette, description: 'Colors, sizes, and materials' },
+  { id: 'details', label: 'Details', icon: Settings, description: 'Dimensions, delivery, and care' },
+  { id: 'visibility', label: 'Visibility & SEO', icon: Eye, description: 'Publish settings and search optimization' },
+]
+
+function Hint({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="flex items-start gap-1.5 text-xs text-mocha mt-1">
+      <Info className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
+      <span>{children}</span>
+    </span>
+  )
+}
+
+function Optional() {
+  return <span className="text-xs font-normal text-sand ml-1">(Optional)</span>
+}
+
+function StepIndicator({ currentStep, steps }: { currentStep: number; steps: typeof STEPS }) {
+  return (
+    <div className="flex items-center justify-center gap-1 sm:gap-2">
+      {steps.map((step, i) => {
+        const isComplete = i < currentStep
+        const isCurrent = i === currentStep
+        return (
+          <div key={step.id} className="flex items-center gap-1 sm:gap-2">
+            <div className="flex flex-col items-center">
+              <div
+                className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+                  isComplete
+                    ? 'bg-gold text-white'
+                    : isCurrent
+                    ? 'bg-chocolate text-white ring-2 ring-gold/30'
+                    : 'bg-beige text-mocha'
+                }`}
+              >
+                {isComplete ? <Check className="w-4 h-4" /> : i + 1}
+              </div>
+              <span className={`text-[10px] sm:text-xs mt-1 hidden sm:block ${isCurrent ? 'text-chocolate font-medium' : 'text-mocha'}`}>
+                {step.label}
+              </span>
+            </div>
+            {i < steps.length - 1 && (
+              <div className={`w-6 sm:w-10 h-0.5 ${isComplete ? 'bg-gold' : 'bg-beige'} mt-0 sm:mt-0 mb-4 sm:mb-0`} />
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 export default function AdminProductForm() {
   const navigate = useNavigate()
   const { id } = useParams<{ id: string }>()
@@ -108,6 +169,7 @@ export default function AdminProductForm() {
   const createProduct = useCreateProduct()
   const updateProduct = useUpdateProduct()
 
+  const [currentStep, setCurrentStep] = useState(0)
   const [materialInput, setMaterialInput] = useState('')
   const [tagInput, setTagInput] = useState('')
   const [images, setImages] = useState<{ url: string; publicId: string; alt: string; isPrimary: boolean; file?: File }[]>([])
@@ -122,6 +184,7 @@ export default function AdminProductForm() {
     setValue,
     reset,
     control,
+    trigger,
     formState: { errors },
   } = useForm<ProductFormData>({
     resolver: zodResolver(productSchema),
@@ -274,6 +337,34 @@ export default function AdminProductForm() {
     return () => document.removeEventListener('paste', handlePaste)
   }, [handlePaste])
 
+  const STEP_FIELDS: (keyof ProductFormData)[][] = [
+    ['name', 'description', 'category'],
+    ['price', 'stock'],
+    [],
+    [],
+    [],
+    [],
+  ]
+
+  const validateStep = async () => {
+    const fields = STEP_FIELDS[currentStep]
+    if (fields.length === 0) return true
+    return await trigger(fields)
+  }
+
+  const handleNext = async () => {
+    const valid = await validateStep()
+    if (valid && currentStep < STEPS.length - 1) {
+      setCurrentStep(currentStep + 1)
+    }
+  }
+
+  const handleBack = () => {
+    if (currentStep > 0) {
+      setCurrentStep(currentStep - 1)
+    }
+  }
+
   const onSubmit = async (data: ProductFormData) => {
     try {
       const payload = {
@@ -308,19 +399,665 @@ export default function AdminProductForm() {
     return (
       <div className="space-y-6">
         <Skeleton className="h-8 w-48" />
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-6">
-            <Skeleton className="h-64 rounded-lg" />
-            <Skeleton className="h-48 rounded-lg" />
-          </div>
-          <Skeleton className="h-96 rounded-lg" />
-        </div>
+        <Skeleton className="h-12 w-full" />
+        <Skeleton className="h-96 rounded-lg" />
       </div>
     )
   }
 
+  const renderStep = () => {
+    switch (currentStep) {
+      case 0:
+        return (
+          <motion.div
+            key="basic"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            className="space-y-5"
+          >
+            <div>
+              <Label htmlFor="name">Product Name *</Label>
+              <Input
+                id="name"
+                {...register('name')}
+                placeholder="e.g., Handmade Crochet Baby Blanket"
+              />
+              <Hint>Choose a clear, descriptive name that customers will search for.</Hint>
+              {errors.name?.message && <p className="mt-1 text-sm text-red-500">{errors.name.message}</p>}
+            </div>
+            <div>
+              <Label htmlFor="description">Description *</Label>
+              <Textarea
+                id="description"
+                {...register('description')}
+                placeholder="Describe your product in detail — materials used, craftsmanship, what makes it special..."
+                rows={6}
+              />
+              <Hint>The more detail you provide, the more confident customers will feel purchasing.</Hint>
+              {errors.description?.message && <p className="mt-1 text-sm text-red-500">{errors.description.message}</p>}
+            </div>
+            <div>
+              <Label htmlFor="shortDescription">Short Description <Optional /></Label>
+              <Textarea
+                id="shortDescription"
+                {...register('shortDescription')}
+                placeholder="One or two sentences for product cards and previews..."
+                rows={2}
+              />
+              <Hint>Shown on product cards and in search results. Keep it concise.</Hint>
+            </div>
+            <div>
+              <Label htmlFor="category">Category *</Label>
+              <Select
+                value={watch('category')}
+                onValueChange={(v) => setValue('category', v)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories?.map((cat) => (
+                    <SelectItem key={cat._id} value={cat._id}>
+                      {cat.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Hint>Categories help customers browse and find your products.</Hint>
+              {errors.category?.message && <p className="mt-1 text-sm text-red-500">{errors.category.message}</p>}
+            </div>
+          </motion.div>
+        )
+
+      case 1:
+        return (
+          <motion.div
+            key="pricing"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            className="space-y-5"
+          >
+            <div>
+              <Label htmlFor="price">Price *</Label>
+              <Input
+                id="price"
+                type="number"
+                step="0.01"
+                {...register('price', { valueAsNumber: true })}
+                placeholder="0.00"
+              />
+              <Hint>The selling price customers will see. Set in NGN (₦).</Hint>
+              {errors.price?.message && <p className="mt-1 text-sm text-red-500">{errors.price.message}</p>}
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="compareAtPrice">Compare At Price <Optional /></Label>
+                <Input
+                  id="compareAtPrice"
+                  type="number"
+                  step="0.01"
+                  {...register('compareAtPrice', { valueAsNumber: true })}
+                  placeholder="Leave blank if not applicable"
+                />
+                <Hint>Original price before discount. Shows a strikethrough to highlight savings.</Hint>
+              </div>
+              <div>
+                <Label htmlFor="costPrice">Cost Price <Optional /></Label>
+                <Input
+                  id="costPrice"
+                  type="number"
+                  step="0.01"
+                  {...register('costPrice', { valueAsNumber: true })}
+                  placeholder="Your cost to produce"
+                />
+                <Hint>For your records only — never shown to customers. Helps track profit margins.</Hint>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="sku">SKU <Optional /></Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="sku"
+                    {...register('sku')}
+                    placeholder="e.g., JC-BAB-001"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setValue('sku', `JC-${Date.now().toString(36).toUpperCase().slice(-6)}`)}
+                  >
+                    <RefreshCw className="w-4 h-4" />
+                  </Button>
+                </div>
+                <Hint>Stock Keeping Unit — your internal identifier. Click the refresh icon to auto-generate one.</Hint>
+              </div>
+              <div>
+                <Label htmlFor="stock">Stock Quantity *</Label>
+                <Input
+                  id="stock"
+                  type="number"
+                  {...register('stock', { valueAsNumber: true })}
+                  placeholder="0"
+                />
+                <Hint>How many units are available. Set to 0 to mark as out of stock.</Hint>
+                {errors.stock?.message && <p className="mt-1 text-sm text-red-500">{errors.stock.message}</p>}
+              </div>
+            </div>
+          </motion.div>
+        )
+
+      case 2:
+        return (
+          <motion.div
+            key="media"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            className="space-y-5"
+          >
+            <div>
+              <Label>Product Images <Optional /></Label>
+              <Hint>High-quality photos sell products. Add as many as you like — the first image becomes the primary one.</Hint>
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              className="hidden"
+              onChange={(e) => handleImageUpload(e.target.files)}
+            />
+            {images.length === 0 ? (
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                onDrop={handleDrop}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                className={`border-2 border-dashed rounded-xl p-12 text-center transition-colors cursor-pointer ${
+                  dragIndex !== null ? 'border-gold bg-amber-50' : 'border-sand/50 hover:border-gold'
+                }`}
+              >
+                <Upload className="w-12 h-12 mx-auto text-mocha/40 mb-4" />
+                <p className="text-sm font-medium text-chocolate">Drag & drop images here</p>
+                <p className="text-xs text-mocha mt-1">or click to browse</p>
+                <p className="text-xs text-mocha/60 mt-3">You can also paste screenshots with Ctrl+V</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                  {images.map((img, index) => (
+                    <div
+                      key={img.publicId || index}
+                      className="relative group aspect-square rounded-xl overflow-hidden bg-beige border border-sand/30"
+                    >
+                      <img
+                        src={img.url}
+                        alt={img.alt || 'Product image'}
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 bg-white/90 hover:bg-white"
+                          onClick={() => { if (index > 0) moveImage(index, index - 1) }}
+                          disabled={index === 0}
+                        >
+                          ←
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 bg-white/90 hover:bg-white"
+                          onClick={() => { if (index < images.length - 1) moveImage(index, index + 1) }}
+                          disabled={index === images.length - 1}
+                        >
+                          →
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 bg-red-500/90 hover:bg-red-500 text-white"
+                          onClick={() => handleDeleteImage(img.publicId)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                      {img.isPrimary && (
+                        <span className="absolute top-1.5 left-1.5 bg-gold text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                          PRIMARY
+                        </span>
+                      )}
+                      {!img.isPrimary && (
+                        <button
+                          type="button"
+                          onClick={() => setPrimary(img.publicId)}
+                          className="absolute top-1.5 right-1.5 bg-white/80 hover:bg-white text-[10px] px-2 py-0.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          Set Primary
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="aspect-square rounded-xl border-2 border-dashed border-sand/50 hover:border-gold transition-colors flex flex-col items-center justify-center gap-1 text-mocha hover:text-gold"
+                  >
+                    <Plus className="w-6 h-6" />
+                    <span className="text-xs">Add More</span>
+                  </button>
+                </div>
+                <p className="text-xs text-mocha">{images.length} image(s) uploaded</p>
+              </div>
+            )}
+          </motion.div>
+        )
+
+      case 3:
+        return (
+          <motion.div
+            key="variants"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            className="space-y-6"
+          >
+            {/* Colors */}
+            <div className="space-y-3">
+              <div>
+                <Label>Colors <Optional /></Label>
+                <Hint>Add available color options. Customers can select a color when ordering.</Hint>
+              </div>
+              {colorFields.map((field, index) => (
+                <div key={field.id} className="flex items-center gap-2">
+                  <Input
+                    {...register(`colors.${index}.name`)}
+                    placeholder="e.g., Dusty Rose"
+                    className="flex-1"
+                  />
+                  <Input
+                    {...register(`colors.${index}.hex`)}
+                    type="color"
+                    className="w-12 h-10 p-1 cursor-pointer"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-10 w-10 text-red-500"
+                    onClick={() => removeColor(index)}
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              ))}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => appendColor({ name: '', hex: '#000000', inStock: true })}
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add Color
+              </Button>
+            </div>
+
+            {/* Sizes */}
+            <div className="space-y-3">
+              <div>
+                <Label>Sizes <Optional /></Label>
+                <Hint>Add size variants if your product comes in different sizes. Each size can have its own price.</Hint>
+              </div>
+              {sizeFields.map((field, index) => (
+                <div key={field.id} className="flex items-center gap-2">
+                  <Input
+                    {...register(`sizes.${index}.name`)}
+                    placeholder="e.g., Small, Medium, Large"
+                    className="flex-1"
+                  />
+                  <Input
+                    {...register(`sizes.${index}.price`, { valueAsNumber: true })}
+                    type="number"
+                    step="0.01"
+                    placeholder="Price override"
+                    className="w-36"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-10 w-10 text-red-500"
+                    onClick={() => removeSize(index)}
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              ))}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => appendSize({ name: '', price: 0, inStock: true })}
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add Size
+              </Button>
+            </div>
+
+            {/* Materials */}
+            <div className="space-y-3">
+              <div>
+                <Label>Materials <Optional /></Label>
+                <Hint>List the materials used — e.g., "100% Acrylic Yarn", "Cotton Blend". Helps customers know what they're buying.</Hint>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {watch('materials')?.map((mat, i) => (
+                  <span
+                    key={i}
+                    className="inline-flex items-center gap-1 px-3 py-1 bg-beige rounded-full text-sm text-chocolate"
+                  >
+                    {mat}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const current = watch('materials') || []
+                        setValue('materials', current.filter((_, idx) => idx !== i))
+                      }}
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <Input
+                  value={materialInput}
+                  onChange={(e) => setMaterialInput(e.target.value)}
+                  placeholder="Type a material and press Enter"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      if (materialInput.trim()) {
+                        const current = watch('materials') || []
+                        setValue('materials', [...current, materialInput.trim()])
+                        setMaterialInput('')
+                      }
+                    }
+                  }}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    if (materialInput.trim()) {
+                      const current = watch('materials') || []
+                      setValue('materials', [...current, materialInput.trim()])
+                      setMaterialInput('')
+                    }
+                  }}
+                >
+                  Add
+                </Button>
+              </div>
+            </div>
+          </motion.div>
+        )
+
+      case 4:
+        return (
+          <motion.div
+            key="details"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            className="space-y-5"
+          >
+            <div>
+              <Label>Dimensions <Optional /></Label>
+              <Hint>Useful for shipping estimates. All fields are optional — fill in what applies.</Hint>
+              <div className="grid grid-cols-4 gap-3 mt-2">
+                <div>
+                  <Input
+                    type="number"
+                    step="0.1"
+                    {...register('dimensions.length', { valueAsNumber: true })}
+                    placeholder="Length"
+                  />
+                </div>
+                <div>
+                  <Input
+                    type="number"
+                    step="0.1"
+                    {...register('dimensions.width', { valueAsNumber: true })}
+                    placeholder="Width"
+                  />
+                </div>
+                <div>
+                  <Input
+                    type="number"
+                    step="0.1"
+                    {...register('dimensions.height', { valueAsNumber: true })}
+                    placeholder="Height"
+                  />
+                </div>
+                <div>
+                  <Select
+                    value={watch('dimensions.unit') || 'cm'}
+                    onValueChange={(v) => setValue('dimensions.unit', v)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="cm">cm</SelectItem>
+                      <SelectItem value="in">inches</SelectItem>
+                      <SelectItem value="mm">mm</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="weight">Weight (grams) <Optional /></Label>
+              <Input
+                id="weight"
+                type="number"
+                step="0.1"
+                {...register('weight', { valueAsNumber: true })}
+                placeholder="e.g., 250"
+              />
+              <Hint>Helps calculate shipping costs. Enter weight in grams.</Hint>
+            </div>
+            <div>
+              <Label htmlFor="estimatedDelivery">Estimated Delivery <Optional /></Label>
+              <Input
+                id="estimatedDelivery"
+                {...register('estimatedDelivery')}
+                placeholder="e.g., 3-5 business days"
+              />
+              <Hint>Shown to customers at checkout. Helps set expectations for handmade items.</Hint>
+            </div>
+            <div>
+              <Label htmlFor="careInstructions">Care Instructions <Optional /></Label>
+              <Textarea
+                id="careInstructions"
+                {...register('careInstructions')}
+                placeholder="e.g., Hand wash cold, lay flat to dry. Do not bleach or iron directly."
+                rows={3}
+              />
+              <Hint>Helps customers keep their purchase in great condition.</Hint>
+            </div>
+          </motion.div>
+        )
+
+      case 5:
+        return (
+          <motion.div
+            key="visibility"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            className="space-y-6"
+          >
+            {/* Publishing Status */}
+            <div className="space-y-4">
+              <div>
+                <Label className="text-base font-semibold">Publishing</Label>
+                <Hint>Control when and how this product appears on your store.</Hint>
+              </div>
+              <div className="flex items-center justify-between p-3 rounded-lg bg-beige/50">
+                <div>
+                  <Label htmlFor="isPublished" className="font-medium">Published</Label>
+                  <p className="text-xs text-mocha">Make this product visible in your store</p>
+                </div>
+                <Switch
+                  id="isPublished"
+                  checked={watch('isPublished')}
+                  onCheckedChange={(v) => setValue('isPublished', v)}
+                />
+              </div>
+              <div className="flex items-center justify-between p-3 rounded-lg bg-beige/50">
+                <div>
+                  <Label htmlFor="isFeatured" className="font-medium">Featured <Optional /></Label>
+                  <p className="text-xs text-mocha">Show on the homepage featured section</p>
+                </div>
+                <Switch
+                  id="isFeatured"
+                  checked={watch('isFeatured')}
+                  onCheckedChange={(v) => setValue('isFeatured', v)}
+                />
+              </div>
+              <div className="flex items-center justify-between p-3 rounded-lg bg-beige/50">
+                <div>
+                  <Label htmlFor="isBestSeller" className="font-medium">Best Seller <Optional /></Label>
+                  <p className="text-xs text-mocha">Highlight as a best-selling item</p>
+                </div>
+                <Switch
+                  id="isBestSeller"
+                  checked={watch('isBestSeller')}
+                  onCheckedChange={(v) => setValue('isBestSeller', v)}
+                />
+              </div>
+              <div className="flex items-center justify-between p-3 rounded-lg bg-beige/50">
+                <div>
+                  <Label htmlFor="isNewArrival" className="font-medium">New Arrival <Optional /></Label>
+                  <p className="text-xs text-mocha">Mark as newly added to your collection</p>
+                </div>
+                <Switch
+                  id="isNewArrival"
+                  checked={watch('isNewArrival')}
+                  onCheckedChange={(v) => setValue('isNewArrival', v)}
+                />
+              </div>
+            </div>
+
+            {/* Tags */}
+            <div>
+              <Label htmlFor="tags">Tags <Optional /></Label>
+              <Textarea
+                {...register('tags')}
+                placeholder="e.g., handmade, gift, baby, nursery"
+                rows={2}
+              />
+              <Hint>Comma-separated keywords that help customers find this product via search.</Hint>
+            </div>
+
+            {/* SEO */}
+            <div className="space-y-3">
+              <div>
+                <Label className="text-base font-semibold">Search Engine Optimization <Optional /></Label>
+                <Hint>Control how this product appears in Google search results. If left blank, the product name and description will be used.</Hint>
+              </div>
+              <div>
+                <Label htmlFor="seoTitle">Meta Title</Label>
+                <Input
+                  id="seoTitle"
+                  {...register('seoTitle')}
+                  placeholder="e.g., Handmade Crochet Baby Blanket | Joyful Crochets"
+                />
+                <Hint>Recommended: 50-60 characters. This is the clickable title in search results.</Hint>
+              </div>
+              <div>
+                <Label htmlFor="seoDescription">Meta Description</Label>
+                <Textarea
+                  id="seoDescription"
+                  {...register('seoDescription')}
+                  placeholder="A short summary for search engines..."
+                  rows={2}
+                />
+                <Hint>Recommended: 150-160 characters. Appears below the title in search results.</Hint>
+              </div>
+            </div>
+
+            {/* Customization */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between p-3 rounded-lg bg-beige/50">
+                <div>
+                  <Label htmlFor="allowsCustomization" className="font-medium">Allow Customization <Optional /></Label>
+                  <p className="text-xs text-mocha">Let customers request custom changes to this product</p>
+                </div>
+                <Switch
+                  id="allowsCustomization"
+                  checked={watch('allowsCustomization')}
+                  onCheckedChange={(v) => setValue('allowsCustomization', v)}
+                />
+              </div>
+              {watch('allowsCustomization') && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  className="space-y-3 pl-3 border-l-2 border-gold/30"
+                >
+                  <div>
+                    <Label>Customization Note</Label>
+                    <Textarea
+                      {...register('customizationNote')}
+                      placeholder="e.g., You can choose your preferred color and add a name embroidery..."
+                      rows={2}
+                    />
+                    <Hint>Tell customers what can be customized and any limitations.</Hint>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>Additional Price (₦)</Label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        {...register('additionalPrice', { valueAsNumber: true })}
+                        placeholder="0"
+                      />
+                      <Hint>Extra charge for customization work.</Hint>
+                    </div>
+                    <div>
+                      <Label>Extra Production Days</Label>
+                      <Input
+                        type="number"
+                        {...register('estimatedDays', { valueAsNumber: true })}
+                        placeholder="0"
+                      />
+                      <Hint>How many additional days custom orders take.</Hint>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </div>
+          </motion.div>
+        )
+
+      default:
+        return null
+    }
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-4xl mx-auto">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
@@ -335,594 +1072,58 @@ export default function AdminProductForm() {
           <ArrowLeft className="w-5 h-5" />
         </Button>
         <div>
-          <h1 className="text-2xl font-bold text-chocolate-800 font-display">
+          <h1 className="text-2xl font-bold text-chocolate font-display">
             {isEditing ? 'Edit Product' : 'Add New Product'}
           </h1>
-          <p className="text-chocolate-500 text-sm mt-1">
-            {isEditing ? 'Update product details' : 'Create a new product listing'}
+          <p className="text-mocha text-sm mt-0.5">
+            {isEditing ? 'Update your product details' : STEPS[currentStep].description}
           </p>
         </div>
       </motion.div>
 
+      {/* Step Indicator */}
+      <StepIndicator currentStep={currentStep} steps={STEPS} />
+
+      {/* Step Content */}
       <form onSubmit={handleSubmit(onSubmit)}>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column - Basic Info */}
-          <div className="lg:col-span-2 space-y-6">
-            <Card className="border-chocolate-100">
-              <CardHeader>
-                <CardTitle className="text-lg font-display text-chocolate-800">Basic Information</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label htmlFor="name">Product Name *</Label>
-                  <Input
-                    id="name"
-                    {...register('name')}
-                    placeholder="e.g., Handmade Crochet Baby Blanket"
-                  />
-                  {errors.name?.message && <p className="mt-1 text-sm text-red-500">{errors.name.message}</p>}
-                </div>
-                <div>
-                  <Label htmlFor="description">Description *</Label>
-                  <Textarea
-                    id="description"
-                    {...register('description')}
-                    error={errors.description?.message}
-                    placeholder="Detailed product description..."
-                    rows={6}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="shortDescription">Short Description</Label>
-                  <Textarea
-                    id="shortDescription"
-                    {...register('shortDescription')}
-                    placeholder="Brief description for product cards..."
-                    rows={2}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="category">Category *</Label>
-                  <Select
-                    value={watch('category')}
-                    onValueChange={(v) => setValue('category', v)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories?.map((cat) => (
-                        <SelectItem key={cat._id} value={cat._id}>
-                          {cat.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </CardContent>
-            </Card>
+        <Card className="border-sand/30">
+          <CardContent className="p-6">
+            <AnimatePresence mode="wait">
+              {renderStep()}
+            </AnimatePresence>
+          </CardContent>
+        </Card>
 
-            <Card className="border-chocolate-100">
-              <CardHeader>
-                <CardTitle className="text-lg font-display text-chocolate-800">Pricing & Inventory</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div>
-                    <Label htmlFor="price">Price *</Label>
-                    <Input
-                      id="price"
-                      type="number"
-                      step="0.01"
-                      {...register('price', { valueAsNumber: true })}
-                    />
-                    {errors.price?.message && <p className="mt-1 text-sm text-red-500">{errors.price.message}</p>}
-                  </div>
-                  <div>
-                    <Label htmlFor="compareAtPrice">Compare At Price</Label>
-                    <Input
-                      id="compareAtPrice"
-                      type="number"
-                      step="0.01"
-                      {...register('compareAtPrice', { valueAsNumber: true })}
-                      placeholder="Optional"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="costPrice">Cost Price</Label>
-                    <Input
-                      id="costPrice"
-                      type="number"
-                      step="0.01"
-                      {...register('costPrice', { valueAsNumber: true })}
-                      placeholder="Optional"
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="sku">SKU</Label>
-                    <div className="flex gap-2">
-                      <Input
-                        id="sku"
-                        {...register('sku')}
-                        placeholder="Auto-generate or enter"
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => setValue('sku', `JC-${Date.now().toString(36).toUpperCase().slice(-6)}`)}
-                      >
-                        <RefreshCw className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                  <div>
-                    <Label htmlFor="stock">Stock Quantity *</Label>
-                    <Input
-                      id="stock"
-                      type="number"
-                      {...register('stock', { valueAsNumber: true })}
-                    />
-                    {errors.stock?.message && <p className="mt-1 text-sm text-red-500">{errors.stock.message}</p>}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+        {/* Navigation */}
+        <div className="flex items-center justify-between mt-6">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={(e) => { e.preventDefault(); currentStep === 0 ? navigate('/admin/products') : handleBack() }}
+            className="border-sand/50"
+          >
+            {currentStep === 0 ? 'Cancel' : 'Back'}
+          </Button>
 
-            {/* Description sections */}
-            <Card className="border-chocolate-100">
-              <CardHeader>
-                <CardTitle className="text-lg font-display text-chocolate-800">Additional Details</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="estimatedDelivery">Estimated Delivery</Label>
-                    <Input
-                      id="estimatedDelivery"
-                      {...register('estimatedDelivery')}
-                      placeholder="e.g., 3-5 business days"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="weight">Weight (g)</Label>
-                    <Input
-                      id="weight"
-                      type="number"
-                      step="0.1"
-                      {...register('weight', { valueAsNumber: true })}
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-3 gap-4">
-                  <div>
-                    <Label>Length</Label>
-                    <Input
-                      type="number"
-                      step="0.1"
-                      {...register('dimensions.length', { valueAsNumber: true })}
-                    />
-                  </div>
-                  <div>
-                    <Label>Width</Label>
-                    <Input
-                      type="number"
-                      step="0.1"
-                      {...register('dimensions.width', { valueAsNumber: true })}
-                    />
-                  </div>
-                  <div>
-                    <Label>Height</Label>
-                    <Input
-                      type="number"
-                      step="0.1"
-                      {...register('dimensions.height', { valueAsNumber: true })}
-                    />
-                  </div>
-                </div>
-                <div>
-                  <Label htmlFor="careInstructions">Care Instructions</Label>
-                  <Textarea
-                    id="careInstructions"
-                    {...register('careInstructions')}
-                    placeholder="e.g., Hand wash cold, lay flat to dry..."
-                    rows={3}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* SEO */}
-            <Card className="border-chocolate-100">
-              <CardHeader>
-                <CardTitle className="text-lg font-display text-chocolate-800">SEO</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label htmlFor="seoTitle">Meta Title</Label>
-                  <Input
-                    id="seoTitle"
-                    {...register('seoTitle')}
-                    placeholder="SEO title"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="seoDescription">Meta Description</Label>
-                  <Textarea
-                    id="seoDescription"
-                    {...register('seoDescription')}
-                    placeholder="SEO description"
-                    rows={2}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Right Column - Media & Options */}
-          <div className="space-y-6">
-            <Card className="border-chocolate-100">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="text-lg font-display text-chocolate-800">Media</CardTitle>
-                <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} loading={isUploading}>
-                  <Upload className="w-4 h-4 mr-2" />
-                  Upload
-                </Button>
-              </CardHeader>
-              <CardContent>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  className="hidden"
-                  onChange={(e) => handleImageUpload(e.target.files)}
-                />
-                {images.length === 0 ? (
-                  <div
-                    onDrop={handleDrop}
-                    onDragOver={handleDragOver}
-                    onDragLeave={handleDragLeave}
-                    className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer ${
-                      dragIndex !== null ? 'border-gold bg-amber-50' : 'border-chocolate-200 hover:border-gold'
-                    }`}
-                  >
-                    <Upload className="w-10 h-10 mx-auto text-chocolate-400 mb-3" />
-                    <p className="text-sm text-chocolate-600">Drag & drop images or click Upload</p>
-                    <p className="text-xs text-chocolate-400 mt-1">You can also paste screenshots (Ctrl+V)</p>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                      {images.map((img, index) => (
-                        <div
-                          key={img.publicId || index}
-                          className="relative group aspect-square rounded-lg overflow-hidden bg-chocolate-100 border border-chocolate-200"
-                        >
-                          <img
-                            src={img.url}
-                            alt={img.alt || 'Product image'}
-                            className="w-full h-full object-cover"
-                          />
-                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1">
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 bg-white/90 hover:bg-white"
-                              onClick={() => {
-                                if (index > 0) moveImage(index, index - 1)
-                              }}
-                              disabled={index === 0}
-                            >
-                              <span className="sr-only">Move left</span>
-                              ←
-                            </Button>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 bg-white/90 hover:bg-white"
-                              onClick={() => {
-                                if (index < images.length - 1) moveImage(index, index + 1)
-                              }}
-                              disabled={index === images.length - 1}
-                            >
-                              <span className="sr-only">Move right</span>
-                              →
-                            </Button>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 bg-red-500/90 hover:bg-red-500 text-white"
-                              onClick={() => handleDeleteImage(img.publicId)}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                          {img.isPrimary && (
-                            <span className="absolute top-1 left-1 bg-gold text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
-                              PRIMARY
-                            </span>
-                          )}
-                          {!img.isPrimary && (
-                            <button
-                              type="button"
-                              onClick={() => setPrimary(img.publicId)}
-                              className="absolute top-1 right-1 bg-white/80 hover:bg-white text-[10px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity"
-                            >
-                              Set as Primary
-                            </button>
-                          )}
-                        </div>
-                      ))}
-                      <button
-                        type="button"
-                        onClick={() => fileInputRef.current?.click()}
-                        className="aspect-square rounded-lg border-2 border-dashed border-chocolate-200 hover:border-gold transition-colors flex flex-col items-center justify-center gap-1 text-chocolate-400 hover:text-gold"
-                      >
-                        <Plus className="w-6 h-6" />
-                        <span className="text-xs">Add More</span>
-                      </button>
-                    </div>
-                    <p className="text-xs text-chocolate-400">{images.length} image(s) · Click PRIMARY to set a different primary image</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card className="border-chocolate-100">
-              <CardHeader>
-                <CardTitle className="text-lg font-display text-chocolate-800">Colors</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {colorFields.map((field, index) => (
-                  <div key={field.id} className="flex items-center gap-2">
-                    <Input
-                      {...register(`colors.${index}.name`)}
-                      placeholder="Color name"
-                      className="flex-1"
-                    />
-                    <Input
-                      {...register(`colors.${index}.hex`)}
-                      type="color"
-                      className="w-12 h-10 p-1 cursor-pointer"
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-10 w-10 text-red-500"
-                      onClick={() => removeColor(index)}
-                    >
-                      <X className="w-4 h-4" />
-                    </Button>
-                  </div>
-                ))}
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => appendColor({ name: '', hex: '#000000', inStock: true })}
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Color
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card className="border-chocolate-100">
-              <CardHeader>
-                <CardTitle className="text-lg font-display text-chocolate-800">Sizes</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {sizeFields.map((field, index) => (
-                  <div key={field.id} className="flex items-center gap-2">
-                    <Input
-                      {...register(`sizes.${index}.name`)}
-                      placeholder="Size name"
-                      className="flex-1"
-                    />
-                    <Input
-                      {...register(`sizes.${index}.price`, { valueAsNumber: true })}
-                      type="number"
-                      step="0.01"
-                      placeholder="Price"
-                      className="w-28"
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-10 w-10 text-red-500"
-                      onClick={() => removeSize(index)}
-                    >
-                      <X className="w-4 h-4" />
-                    </Button>
-                  </div>
-                ))}
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => appendSize({ name: '', price: 0, inStock: true })}
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Size
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card className="border-chocolate-100">
-              <CardHeader>
-                <CardTitle className="text-lg font-display text-chocolate-800">Materials</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-wrap gap-2 mb-2">
-                  {watch('materials')?.map((mat, i) => (
-                    <span
-                      key={i}
-                      className="inline-flex items-center gap-1 px-2 py-1 bg-chocolate-100 rounded-full text-sm"
-                    >
-                      {mat}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const current = watch('materials') || []
-                          setValue('materials', current.filter((_, idx) => idx !== i))
-                        }}
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </span>
-                  ))}
-                </div>
-                <div className="flex gap-2">
-                  <Input
-                    value={materialInput}
-                    onChange={(e) => setMaterialInput(e.target.value)}
-                    placeholder="Add material"
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault()
-                        if (materialInput.trim()) {
-                          const current = watch('materials') || []
-                          setValue('materials', [...current, materialInput.trim()])
-                          setMaterialInput('')
-                        }
-                      }
-                    }}
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      if (materialInput.trim()) {
-                        const current = watch('materials') || []
-                        setValue('materials', [...current, materialInput.trim()])
-                        setMaterialInput('')
-                      }
-                    }}
-                  >
-                    Add
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Status & Visibility */}
-            <Card className="border-chocolate-100">
-              <CardHeader>
-                <CardTitle className="text-lg font-display text-chocolate-800">Visibility</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="isPublished">Published</Label>
-                  <Switch
-                    id="isPublished"
-                    checked={watch('isPublished')}
-                    onCheckedChange={(v) => setValue('isPublished', v)}
-                  />
-                </div>
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="isFeatured">Featured</Label>
-                  <Switch
-                    id="isFeatured"
-                    checked={watch('isFeatured')}
-                    onCheckedChange={(v) => setValue('isFeatured', v)}
-                  />
-                </div>
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="isBestSeller">Best Seller</Label>
-                  <Switch
-                    id="isBestSeller"
-                    checked={watch('isBestSeller')}
-                    onCheckedChange={(v) => setValue('isBestSeller', v)}
-                  />
-                </div>
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="isNewArrival">New Arrival</Label>
-                  <Switch
-                    id="isNewArrival"
-                    checked={watch('isNewArrival')}
-                    onCheckedChange={(v) => setValue('isNewArrival', v)}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Tags */}
-            <Card className="border-chocolate-100">
-              <CardHeader>
-                <CardTitle className="text-lg font-display text-chocolate-800">Tags</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Textarea
-                  {...register('tags')}
-                  placeholder="Comma-separated tags..."
-                  rows={2}
-                />
-              </CardContent>
-            </Card>
-
-            {/* Customization */}
-            <Card className="border-chocolate-100">
-              <CardHeader>
-                <CardTitle className="text-lg font-display text-chocolate-800">Customization</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="allowsCustomization">Allow Customization</Label>
-                  <Switch
-                    id="allowsCustomization"
-                    checked={watch('allowsCustomization')}
-                    onCheckedChange={(v) => setValue('allowsCustomization', v)}
-                  />
-                </div>
-                {watch('allowsCustomization') && (
-                  <>
-                    <div>
-                      <Label>Customization Note</Label>
-                      <Textarea
-                        {...register('customizationNote')}
-                        placeholder="Instructions for customization..."
-                        rows={2}
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label>Additional Price ($)</Label>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          {...register('additionalPrice', { valueAsNumber: true })}
-                        />
-                      </div>
-                      <div>
-                        <Label>Est. Days</Label>
-                        <Input
-                          type="number"
-                          {...register('estimatedDays', { valueAsNumber: true })}
-                        />
-                      </div>
-                    </div>
-                  </>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Submit */}
+          {currentStep < STEPS.length - 1 ? (
+            <Button
+              type="button"
+              onClick={(e) => { e.preventDefault(); handleNext() }}
+              className="bg-chocolate hover:bg-chocolate/90 text-white"
+            >
+              Next
+              <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
+          ) : (
             <Button
               type="submit"
-              className="w-full bg-gold hover:bg-gold-muted text-white h-12"
+              className="bg-gold hover:bg-gold/90 text-white"
               loading={isSubmitting}
             >
-              <Save className="w-5 h-5 mr-2" />
+              <Save className="w-4 h-4 mr-2" />
               {isEditing ? 'Update Product' : 'Create Product'}
             </Button>
-          </div>
+          )}
         </div>
       </form>
     </div>

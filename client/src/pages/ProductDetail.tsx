@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
-  Home, Star, Heart, ShoppingBag, Minus, Plus, Truck, RotateCcw,
+  Home, Heart, ShoppingBag, Minus, Plus, Truck, RotateCcw,
   Shield, ChevronDown, Package
 } from 'lucide-react'
 import { useProduct } from '@/hooks/useProducts'
@@ -139,26 +139,6 @@ export default function ProductDetail() {
             <h1 className="font-display text-3xl md:text-4xl font-bold text-chocolate leading-tight">
               {product.name}
             </h1>
-
-            {/* Rating */}
-            <div className="flex items-center gap-3">
-              <div className="flex items-center">
-                {[...Array(5)].map((_, i) => (
-                  <Star
-                    key={i}
-                    className={cn(
-                      'h-5 w-5',
-                      i < Math.round(product.averageRating)
-                        ? 'fill-gold text-gold'
-                        : 'fill-beige text-beige'
-                    )}
-                  />
-                ))}
-              </div>
-              <button className="text-sm text-mocha hover:text-gold transition-colors underline">
-                {product.numReviews} reviews
-              </button>
-            </div>
 
             {/* Price */}
             <div className="flex items-baseline gap-3">

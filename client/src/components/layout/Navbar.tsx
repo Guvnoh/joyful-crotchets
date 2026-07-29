@@ -22,7 +22,6 @@ import { useUIStore } from '@/stores/uiStore'
 const navLinks = [
   { name: 'Home', href: '/' },
   { name: 'Shop', href: '/shop', hasMegaMenu: true },
-  { name: 'Collections', href: '/shop?featured=true' },
   { name: 'About', href: '/about' },
   { name: 'Contact', href: '/contact' },
 ]

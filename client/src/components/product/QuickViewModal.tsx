@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Star, ShoppingBag, ChevronLeft, ChevronRight } from 'lucide-react'
+import { ShoppingBag, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { useUIStore } from '@/stores/uiStore'
@@ -82,23 +82,6 @@ export function QuickViewModal() {
               <h2 className="font-display text-2xl font-bold text-chocolate mb-2">
                 {product.name}
               </h2>
-
-              {/* Rating */}
-              <div className="flex items-center gap-2 mb-4">
-                <div className="flex items-center">
-                  {[...Array(5)].map((_, i) => (
-                    <Star
-                      key={i}
-                      className={`h-4 w-4 ${
-                        i < Math.round(product.averageRating)
-                          ? 'fill-gold text-gold'
-                          : 'fill-beige text-beige'
-                      }`}
-                    />
-                  ))}
-                </div>
-                <span className="text-sm text-mocha">({product.numReviews} reviews)</span>
-              </div>
 
               {/* Price */}
               <div className="flex items-center gap-3 mb-4">

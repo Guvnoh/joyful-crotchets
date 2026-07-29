@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Star, Heart, Eye, ShoppingBag } from 'lucide-react'
+import { Heart, Eye, ShoppingBag } from 'lucide-react'
 import { useCartStore } from '@/stores/cartStore'
 import { useWishlistStore } from '@/stores/wishlistStore'
 import { useUIStore } from '@/stores/uiStore'
@@ -114,25 +114,6 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
             {product.name}
           </h3>
         </Link>
-
-        {/* Rating */}
-        <div className="flex items-center gap-1.5">
-          <div className="flex items-center">
-            {[...Array(5)].map((_, i) => (
-              <Star
-                key={i}
-                className={`h-3.5 w-3.5 ${
-                  i < Math.round(product.averageRating)
-                    ? 'fill-gold text-gold'
-                    : 'fill-beige text-beige'
-                }`}
-              />
-            ))}
-          </div>
-          <span className="text-xs text-mocha">
-            ({product.numReviews})
-          </span>
-        </div>
 
         {/* Price */}
         <div className="flex items-center gap-2">
