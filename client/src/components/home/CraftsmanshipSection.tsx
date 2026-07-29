@@ -41,7 +41,7 @@ export function CraftsmanshipSection() {
             </h2>
             <div className="mt-4 h-0.5 w-16 bg-gradient-to-r from-gold/60 via-gold to-gold/60" />
             <p className="mt-6 leading-relaxed text-mocha">
-              At Joyful Crotchets, each piece is handcrafted with devotion and precision. Our skilled
+              At Joyful Crochets, each piece is handcrafted with devotion and precision. Our skilled
               artisans pour their hearts into every creation, using premium yarns and time-honored
               techniques to produce works of art that are as functional as they are beautiful.
             </p>

@@ -5,6 +5,7 @@ import { SearchModal } from './SearchModal'
 import { CartSidebar } from './CartSidebar'
 import { NewsletterPopup } from './NewsletterPopup'
 import { CookieConsent } from './CookieConsent'
+import { QuickViewModal } from '@/components/product/QuickViewModal'
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -15,6 +16,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <Footer />
       <SearchModal />
       <CartSidebar />
+      <QuickViewModal />
       <NewsletterPopup />
       <CookieConsent />
     </div>

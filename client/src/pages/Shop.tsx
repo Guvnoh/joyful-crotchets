@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Home, SlidersHorizontal, X, LayoutGrid, ChevronLeft, ChevronRight, PackageOpen } from 'lucide-react'
 import { useProducts } from '@/hooks/useProducts'
+import { useCategories } from '@/hooks/useCategories'
 import { ProductCard } from '@/components/common/ProductCard'
 import { FilterSidebar } from '@/components/shop/FilterSidebar'
 import { SortSelect, type SortOption } from '@/components/shop/SortSelect'
@@ -24,14 +25,32 @@ export default function Shop() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [viewColumns, setViewColumns] = useState<2 | 3 | 4>(3)
   const [isFilterOpen, setIsFilterOpen] = useState(false)
+  const { data: categories = [] } = useCategories()
+
+  const categorySlug = searchParams.get('category')
+
+  const resolvedCategoryId = useMemo(() => {
+    if (!categorySlug) return null
+    const match = categories.find((c) => c.slug === categorySlug || c._id === categorySlug)
+    return match?._id || null
+  }, [categorySlug, categories])
 
   // Read filters from URL
   const [filters, setFilters] = useState<FilterState>({
-    categories: searchParams.get('category')?.split(',').filter(Boolean) || [],
+    categories: resolvedCategoryId ? [resolvedCategoryId] : [],
     minPrice: searchParams.get('minPrice') || '',
     maxPrice: searchParams.get('maxPrice') || '',
     inStock: searchParams.get('inStock') === 'true',
   })
+
+  // Sync filters when resolved category changes
+  useEffect(() => {
+    if (resolvedCategoryId && !filters.categories.includes(resolvedCategoryId)) {
+      setFilters((prev) => ({ ...prev, categories: [resolvedCategoryId] }))
+    } else if (!categorySlug && filters.categories.length > 0) {
+      setFilters((prev) => ({ ...prev, categories: [] }))
+    }
+  }, [resolvedCategoryId, categorySlug])
 
   const currentPage = parseInt(searchParams.get('page') || '1', 10)
   const searchQuery = searchParams.get('search') || ''
@@ -41,7 +60,7 @@ export default function Shop() {
   const updateSearchParams = useCallback(
     (newFilters: FilterState, page: number, sort: SortOption) => {
       const params = new URLSearchParams()
-      if (newFilters.categories.length > 0) params.set('category', newFilters.categories.join(','))
+      if (newFilters.categories.length > 0) params.set('category', newFilters.categories[0])
       if (searchQuery) params.set('search', searchQuery)
       if (sort !== 'newest') params.set('sort', sort)
       if (page > 1) params.set('page', String(page))
@@ -216,17 +235,20 @@ export default function Shop() {
             {hasActiveFilters && (
               <div className="flex flex-wrap items-center gap-2 mb-6">
                 <span className="text-xs text-mocha">Active filters:</span>
-                {filters.categories.map((catId) => (
-                  <span key={catId} className="inline-flex items-center gap-1 rounded-full bg-gold/10 px-3 py-1 text-xs text-gold font-medium">
-                    Category
-                    <button onClick={() => handleFilterChange({ ...filters, categories: filters.categories.filter((c) => c !== catId) })}>
-                      <X className="h-3 w-3" />
-                    </button>
-                  </span>
-                ))}
+                {filters.categories.map((catId) => {
+                  const cat = categories.find((c) => c._id === catId)
+                  return (
+                    <span key={catId} className="inline-flex items-center gap-1 rounded-full bg-gold/10 px-3 py-1 text-xs text-gold font-medium">
+                      {cat?.name || 'Category'}
+                      <button onClick={() => handleFilterChange({ ...filters, categories: [] })}>
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  )
+                })}
                 {filters.minPrice && (
                   <span className="inline-flex items-center gap-1 rounded-full bg-gold/10 px-3 py-1 text-xs text-gold font-medium">
-                    Min: ${filters.minPrice}
+                    Min: ₦{filters.minPrice}
                     <button onClick={() => handleFilterChange({ ...filters, minPrice: '' })}>
                       <X className="h-3 w-3" />
                     </button>
@@ -234,7 +256,7 @@ export default function Shop() {
                 )}
                 {filters.maxPrice && (
                   <span className="inline-flex items-center gap-1 rounded-full bg-gold/10 px-3 py-1 text-xs text-gold font-medium">
-                    Max: ${filters.maxPrice}
+                    Max: ₦{filters.maxPrice}
                     <button onClick={() => handleFilterChange({ ...filters, maxPrice: '' })}>
                       <X className="h-3 w-3" />
                     </button>

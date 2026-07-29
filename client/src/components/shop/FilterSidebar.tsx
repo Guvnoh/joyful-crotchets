@@ -43,8 +43,8 @@ export function FilterSidebar({ filters, onFilterChange, onClearFilters, classNa
 
   const toggleCategory = (categoryId: string) => {
     const newCategories = filters.categories.includes(categoryId)
-      ? filters.categories.filter((c) => c !== categoryId)
-      : [...filters.categories, categoryId]
+      ? []
+      : [categoryId]
     onFilterChange({ ...filters, categories: newCategories })
   }
 

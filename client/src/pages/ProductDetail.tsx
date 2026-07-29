@@ -79,32 +79,32 @@ export default function ProductDetail() {
 
   return (
     <div className="min-h-screen bg-ivory">
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 pt-28 pb-8">
         {/* Breadcrumb */}
         <motion.nav
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="flex items-center gap-2 text-sm text-mocha mb-8"
+          className="flex items-center gap-2 text-sm text-mocha mb-8 overflow-hidden flex-wrap"
         >
-          <Link to="/" className="hover:text-gold transition-colors flex items-center gap-1">
+          <Link to="/" className="hover:text-gold transition-colors flex items-center gap-1 shrink-0">
             <Home className="h-3.5 w-3.5" />
             Home
           </Link>
-          <span className="text-sand">/</span>
-          <Link to="/shop" className="hover:text-gold transition-colors">Shop</Link>
-          <span className="text-sand">/</span>
+          <span className="text-sand shrink-0">/</span>
+          <Link to="/shop" className="hover:text-gold transition-colors shrink-0">Shop</Link>
+          <span className="text-sand shrink-0">/</span>
           {product.category && (
             <>
               <Link
                 to={`/shop?category=${product.category.slug}`}
-                className="hover:text-gold transition-colors"
+                className="hover:text-gold transition-colors shrink-0"
               >
                 {product.category.name}
               </Link>
-              <span className="text-sand">/</span>
+              <span className="text-sand shrink-0">/</span>
             </>
           )}
-          <span className="text-chocolate font-medium truncate max-w-[200px]">{product.name}</span>
+          <span className="text-chocolate font-medium truncate min-w-0">{product.name}</span>
         </motion.nav>
 
         {/* Product Section */}
@@ -313,7 +313,7 @@ export default function ProductDetail() {
             {/* Trust Badges */}
             <div className="grid grid-cols-3 gap-4 pt-4">
               {[
-                { icon: Truck, label: 'Free Shipping', sub: 'Orders over $100' },
+                { icon: Truck, label: 'Free Shipping', sub: 'Orders over ₦100' },
                 { icon: RotateCcw, label: 'Easy Returns', sub: '14-day policy' },
                 { icon: Shield, label: 'Secure Checkout', sub: '100% protected' },
               ].map(({ icon: Icon, label, sub }) => (
@@ -359,7 +359,7 @@ export default function ProductDetail() {
                 <AccordionContent className="text-sm text-mocha leading-relaxed">
                   <p>Standard shipping: 3-5 business days within the US.</p>
                   <p>International orders: 7-14 business days.</p>
-                  <p className="mt-2">Free shipping on orders over $100.</p>
+                  <p className="mt-2">Free shipping on orders over ₦100.</p>
                 </AccordionContent>
               </AccordionItem>
 

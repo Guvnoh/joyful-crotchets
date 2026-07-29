@@ -209,7 +209,7 @@ export default function Cart() {
                 </div>
                 {shipping > 0 && (
                   <p className="text-xs text-mocha">
-                    Free shipping on orders over $100
+                    Free shipping on orders over ₦100
                   </p>
                 )}
                 <div className="flex justify-between text-sm">

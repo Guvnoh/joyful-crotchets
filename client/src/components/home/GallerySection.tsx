@@ -17,7 +17,7 @@ export function GallerySection() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <SectionHeader
           title="Follow Our Journey"
-          subtitle="@joyfulcrotchets"
+          subtitle="@joyfulcrochets"
           action={{ label: 'Follow Us', href: 'https://instagram.com' }}
         />
 

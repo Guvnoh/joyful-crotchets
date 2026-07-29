@@ -65,24 +65,6 @@ const processSteps = [
   },
 ];
 
-const team = [
-  {
-    name: "Cheta Joy",
-    role: "Founder & Creative Director",
-    bio: "With over 15 years of crochet experience, Joy founded Joyful Crotchets to share her passion for handcrafted luxury.",
-  },
-  {
-    name: "Boon Kelly",
-    role: "Head of Design",
-    bio: "Boon brings a modern aesthetic to traditional crochet, creating contemporary pieces that honor the craft's rich heritage.",
-  },
-  {
-    name: "Cee Limbah",
-    role: "Production Manager",
-    bio: "Cee ensures every piece meets our quality standards while supporting our team of talented artisans.",
-  },
-];
-
 const fadeInUp = {
   initial: { opacity: 0, y: 30 },
   whileInView: { opacity: 1, y: 0 },
@@ -112,7 +94,7 @@ export default function About() {
               Crafting Joy, One Stitch at a Time
             </h1>
             <p className="text-cream/80 text-lg leading-relaxed">
-              Born from a passion for timeless craftsmanship, Joyful Crotchets
+              Born from a passion for timeless craftsmanship, Joyful Crochets
               creates premium handmade crochet pieces that bring warmth and
               elegance to everyday life.
             </p>
@@ -207,7 +189,7 @@ export default function About() {
                   skill, and love."
                 </p>
                 <p className="font-display text-lg text-chocolate italic">
-                  — Cee Limbah, Founder
+                  — Cheta Joy, Founder
                 </p>
               </div>
             </motion.div>
@@ -264,59 +246,13 @@ export default function About() {
         </div>
       </section>
 
-      {/* Team Section */}
-      <section className="py-20 bg-cream/50">
-        <div className="container mx-auto px-4">
-          <motion.div {...fadeInUp} className="text-center mb-16">
-            <span className="text-gold uppercase tracking-[0.3em] text-sm font-medium">
-              The People Behind the Craft
-            </span>
-            <h2 className="font-display text-4xl font-bold text-chocolate mt-4">
-              Our Team
-            </h2>
-          </motion.div>
-
-          <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-            {team.map((member, index) => (
-              <motion.div
-                key={member.name}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: index * 0.2 }}
-                className="text-center"
-              >
-                <div className="w-32 h-32 rounded-full bg-gradient-to-br from-gold/20 to-caramel/20 flex items-center justify-center mx-auto mb-6">
-                  <span className="font-display text-3xl text-gold font-bold">
-                    {member.name
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")}
-                  </span>
-                </div>
-                <h3 className="font-display text-xl font-semibold text-chocolate">
-                  {member.name}
-                </h3>
-                <p className="text-gold text-sm font-medium mt-1">
-                  {member.role}
-                </p>
-                <p className="text-mocha text-sm mt-3 leading-relaxed">
-                  {member.bio}
-                </p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* Brand Values Banner */}
       <section className="py-16 bg-gradient-to-r from-gold to-gold-muted">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             {[
-              { number: "5000+", label: "Products Crafted" },
-              { number: "2000+", label: "Happy Customers" },
-              { number: "50+", label: "Artisans" },
+              { number: "1000+", label: "Products Crafted" },
+              { number: "200+", label: "Happy Customers" },
               { number: "100%", label: "Handmade" },
             ].map((stat) => (
               <motion.div

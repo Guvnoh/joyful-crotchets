@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { Star, Heart, Eye, ShoppingBag } from 'lucide-react'
 import { useCartStore } from '@/stores/cartStore'
 import { useWishlistStore } from '@/stores/wishlistStore'
+import { useUIStore } from '@/stores/uiStore'
 import { formatPrice, calculateDiscount } from '@/lib/utils'
 import type { Product } from '@/types'
 
@@ -15,6 +16,7 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
   const addToCart = useCartStore((s) => s.addToCart)
   const toggleWishlist = useWishlistStore((s) => s.toggleWishlist)
   const isInWishlist = useWishlistStore((s) => s.isInWishlist(product._id))
+  const setQuickView = useUIStore((s) => s.setQuickView)
 
   const imageUrl = product.images?.[0]?.url || null
   const discount = product.compareAtPrice
@@ -68,6 +70,7 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
               onClick={(e) => {
                 e.preventDefault()
                 e.stopPropagation()
+                setQuickView(true, product._id)
               }}
               className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-chocolate shadow-lg transition-transform hover:scale-110 hover:bg-gold hover:text-white"
               title="Quick View"
@@ -102,7 +105,7 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
       </Link>
 
       {/* Content */}
-      <div className="mt-4 space-y-2 px-1">
+      <div className="mt-4 space-y-2 px-3">
         <p className="text-xs font-medium uppercase tracking-wider text-mocha">
           {product.category?.name || 'Uncategorized'}
         </p>

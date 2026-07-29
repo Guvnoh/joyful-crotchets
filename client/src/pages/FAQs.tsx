@@ -11,7 +11,7 @@ const faqCategories = ['All', 'Shipping', 'Returns', 'Custom Orders', 'Care', 'G
 const faqs = [
   { category: 'Shipping', q: 'How long does shipping take?', a: 'Standard shipping typically takes 3-5 business days within the US. International orders may take 7-14 business days depending on location.' },
   { category: 'Shipping', q: 'Do you offer international shipping?', a: 'Yes! We ship worldwide. International shipping rates are calculated at checkout based on your location.' },
-  { category: 'Shipping', q: 'How much does shipping cost?', a: 'We offer free shipping on orders over $100 within the US. Standard shipping is $8.99 for orders under $100.' },
+  { category: 'Shipping', q: 'How much does shipping cost?', a: 'We offer free shipping on orders over ₦100 within the US. Standard shipping is ₦8.99 for orders under ₦100.' },
   { category: 'Returns', q: 'What is your return policy?', a: 'We accept returns within 14 days of delivery for items in their original condition. Custom orders are final sale.' },
   { category: 'Returns', q: 'How do I initiate a return?', a: 'Contact our customer service team with your order number and reason for return. We\'ll provide a prepaid return label.' },
   { category: 'Custom Orders', q: 'Can I request a custom design?', a: 'Absolutely! Visit our Custom Orders page to submit your request. We\'ll review it and provide a quote within 48 hours.' },

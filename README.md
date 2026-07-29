@@ -1,4 +1,4 @@
-# Joyful Crotchets - Premium Handmade Crochet E-Commerce Platform
+# Joyful Crochets - Premium Handmade Crochet E-Commerce Platform
 
 A production-ready full-stack e-commerce website for a premium handmade crochet products brand. Built with React, TypeScript, Node.js, Express, and MongoDB.
 

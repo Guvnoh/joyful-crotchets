@@ -1,7 +1,6 @@
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ShoppingBag } from 'lucide-react'
-import { SectionHeader } from '@/components/common/SectionHeader'
 import { useCategories } from '@/hooks/useCategories'
 import { Skeleton } from '@/components/ui/skeleton'
 
@@ -18,15 +17,10 @@ export function CategoriesShowcase() {
   const { data: categories = [], isLoading } = useCategories()
 
   return (
-    <section className="py-20 md:py-28">
+    <section className="py-6 md:py-8">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <SectionHeader
-          title="Shop by Category"
-          subtitle="Browse Our Collections"
-        />
-
         {isLoading ? (
-          <div className="mt-10 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
             {Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className="space-y-3">
                 <Skeleton className="aspect-square w-full rounded-2xl" />
@@ -36,7 +30,7 @@ export function CategoriesShowcase() {
             ))}
           </div>
         ) : (
-          <div className="mt-10 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
             {categories.map((category, i) => (
               <motion.div
                 key={category._id}

@@ -14,7 +14,6 @@ import About from '@/pages/About'
 import Contact from '@/pages/Contact'
 import FAQs from '@/pages/FAQs'
 import Gallery from '@/pages/Gallery'
-import Testimonials from '@/pages/Testimonials'
 import Cart from '@/pages/Cart'
 import Checkout from '@/pages/Checkout'
 import OrderConfirmation from '@/pages/OrderConfirmation'
@@ -106,7 +105,6 @@ function App() {
           <Route path="/contact" element={<Layout><Contact /></Layout>} />
           <Route path="/faq" element={<Layout><FAQs /></Layout>} />
           <Route path="/gallery" element={<Layout><Gallery /></Layout>} />
-          <Route path="/testimonials" element={<Layout><Testimonials /></Layout>} />
           <Route path="/cart" element={<Layout><Cart /></Layout>} />
           <Route path="/wishlist" element={<Layout><Wishlist /></Layout>} />
           <Route path="/custom-orders" element={<Layout><CustomOrders /></Layout>} />

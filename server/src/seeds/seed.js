@@ -94,7 +94,7 @@ export const seed = async () => {
   ]);
 
   const categories = await Category.create([
-    { name: 'Bags & Totes', description: 'Handcrafted crochet bags and totes for every occasion', sortOrder: 1, seoTitle: 'Crochet Bags & Totes | Joyful Crotchets', seoDescription: 'Shop our collection of handmade crochet bags and totes', image: { url: 'https://images.unsplash.com/photo-1759544632264-a31a9ff1e60b?w=600&q=80', publicId: '' } },
+    { name: 'Bags & Totes', description: 'Handcrafted crochet bags and totes for every occasion', sortOrder: 1, seoTitle: 'Crochet Bags & Totes | Joyful Crochets', seoDescription: 'Shop our collection of handmade crochet bags and totes', image: { url: 'https://images.unsplash.com/photo-1759544632264-a31a9ff1e60b?w=600&q=80', publicId: '' } },
     { name: 'Bucket Hats', description: 'Trendy and cozy crochet bucket hats', sortOrder: 2, image: { url: 'https://images.unsplash.com/photo-1693387359607-f48d0a824b1e?w=600&q=80', publicId: '' } },
     { name: 'Clothing', description: 'Beautiful handmade crochet clothing pieces', sortOrder: 3, image: { url: 'https://images.unsplash.com/photo-1679847628912-4c3e7402abc7?w=600&q=80', publicId: '' } },
     { name: 'Flowers & Botanicals', description: 'Lifelike crochet flowers and botanical arrangements', sortOrder: 4, image: { url: 'https://images.unsplash.com/photo-1529636798458-92182e662485?w=600&q=80', publicId: '' } },
@@ -638,7 +638,7 @@ export const seed = async () => {
     { customerName: 'Maria Garcia', content: 'I ordered the crochet rose bouquet for my mother\'s birthday and she was in tears! They look so realistic and will last forever. Truly special gifts.', rating: 5, isFeatured: true, sortOrder: 2 },
     { customerName: 'Ashley Williams', content: 'The amigurumi teddy bear I purchased for my daughter is her absolute favorite. It\'s beautifully made and so soft. We\'ve already ordered another one!', rating: 5, isFeatured: true, sortOrder: 3 },
     { customerName: 'Rachel Kim', content: 'I\'ve been searching for the perfect crochet bucket hat and found it here! The sunset gradient is even more beautiful in person. Great quality and fast shipping.', rating: 5, isFeatured: true, sortOrder: 4 },
-    { customerName: 'Laura Martinez', content: 'The custom pet portrait exceeded all my expectations. The artist captured my dog\'s personality perfectly. I\'ve recommended Joyful Crotchets to all my friends.', rating: 5, isFeatured: true, sortOrder: 5 },
+    { customerName: 'Laura Martinez', content: 'The custom pet portrait exceeded all my expectations. The artist captured my dog\'s personality perfectly. I\'ve recommended Joyful Crochets to all my friends.', rating: 5, isFeatured: true, sortOrder: 5 },
     { customerName: 'Nicole Brown', content: 'Beautiful work and excellent customer service. The baby booties gift set was a huge hit at the baby shower. Will definitely order again!', rating: 5, isFeatured: false, sortOrder: 6 },
     { customerName: 'Emma Davis', content: 'I love my chunky throw blanket! It\'s the perfect weight and the colors are exactly as shown. It has become my favorite thing on the couch.', rating: 5, isFeatured: false, sortOrder: 7 },
     { customerName: 'Sophie Wilson', content: 'The mandala wall hanging is a true work of art. It transformed my living room. The attention to detail is remarkable.', rating: 5, isFeatured: false, sortOrder: 8 },
@@ -683,7 +683,7 @@ export const seed = async () => {
   ]);
 
   await SiteSettings.create([
-    { key: 'storeName', value: 'Joyful Crotchets', category: 'general' },
+    { key: 'storeName', value: 'Joyful Crochets', category: 'general' },
     { key: 'storeDescription', value: 'Premium handmade crochet creations crafted with love', category: 'general' },
     { key: 'storeEmail', value: 'hello@joyfulcrotchets.com', category: 'general' },
     { key: 'storePhone', value: '555-0100', category: 'general' },

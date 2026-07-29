@@ -80,7 +80,7 @@ app.use('/api/activity-logs', activityLogRoutes);
 app.use('/api/seed', seedRoutes);
 
 app.get('/api/health', (req, res) => {
-  res.status(200).json({ success: true, message: 'Joyful Crotchets API is running' });
+  res.status(200).json({ success: true, message: 'Joyful Crochets API is running' });
 });
 
 app.use((req, res, next) => {
@@ -92,7 +92,7 @@ app.use(errorHandler);
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
-  console.log(`Joyful Crotchets server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
+  console.log(`Joyful Crochets server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
 });
 
 export default app;

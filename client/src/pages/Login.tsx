@@ -40,7 +40,7 @@ export default function Login() {
           animate={{ opacity: 1, x: 0 }}
           className="text-center p-12 relative z-10"
         >
-          <h1 className="font-display text-5xl font-bold text-cream mb-4">Joyful Crotchets</h1>
+          <h1 className="font-display text-5xl font-bold text-cream mb-4">Joyful Crochets</h1>
           <p className="text-cream/70 text-lg max-w-md">
             Welcome back to our community of handcrafted luxury
           </p>
@@ -55,7 +55,7 @@ export default function Login() {
           className="w-full max-w-md"
         >
           <div className="lg:hidden mb-8 text-center">
-            <h1 className="font-display text-3xl font-bold text-chocolate">Joyful Crotchets</h1>
+            <h1 className="font-display text-3xl font-bold text-chocolate">Joyful Crochets</h1>
           </div>
 
           <h2 className="font-display text-3xl font-bold text-chocolate mb-2">Welcome Back</h2>

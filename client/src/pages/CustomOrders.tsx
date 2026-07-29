@@ -83,9 +83,28 @@ export default function CustomOrders() {
   })
 
   const onSubmit = async (data: CustomOrderFormData) => {
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 2000))
-    toast.success('Custom order request submitted! We\'ll be in touch soon.')
+    const budget = data.budgetMin && data.budgetMax
+      ? `Budget: ₦${data.budgetMin} - ₦${data.budgetMax}`
+      : data.budgetMin
+        ? `Budget: ₦${data.budgetMin}`
+        : ''
+
+    const message = `*New Custom Order Request*
+
+*Name:* ${data.name}
+*Email:* ${data.email}
+*Phone:* ${data.phone}
+
+*Project Type:* ${data.projectType}
+*Description:*
+${data.description}
+
+${budget ? `${budget}\n` : ''}${data.preferredDate ? `*Preferred Date:* ${data.preferredDate}\n` : ''}${data.colors ? `*Colors:* ${data.colors}\n` : ''}${data.dimensions ? `*Dimensions:* ${data.dimensions}\n` : ''}${data.materials ? `*Materials:* ${data.materials}\n` : ''}${data.additionalNotes ? `*Additional Notes:*\n${data.additionalNotes}` : ''}`
+
+    const whatsappUrl = `https://wa.me/2348161342110?text=${encodeURIComponent(message)}`
+    window.open(whatsappUrl, '_blank')
+
+    toast.success('Custom order request submitted! Redirecting to WhatsApp.')
     setIsSubmitted(true)
     reset()
   }

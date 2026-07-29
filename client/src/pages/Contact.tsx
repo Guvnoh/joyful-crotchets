@@ -1,11 +1,9 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import {
-  MapPin,
   MessageCircle,
   Phone,
   Mail,
-  Clock,
   Send,
   Facebook,
   Instagram,
@@ -77,9 +75,20 @@ export default function Contact() {
 
   const onSubmit = async (data: ContactFormData) => {
     setIsSubmitting(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    toast.success("Message sent! We'll get back to you within 24 hours.");
+
+    const message = `*New Contact Message*
+
+*Name:* ${data.name}
+*Email:* ${data.email}
+${data.phone ? `*Phone:* ${data.phone}\n` : ''}*Subject:* ${data.subject}
+
+*Message:*
+${data.message}`
+
+    const whatsappUrl = `https://wa.me/2348161342110?text=${encodeURIComponent(message)}`
+    window.open(whatsappUrl, '_blank')
+
+    toast.success("Message sent! Redirecting to WhatsApp.");
     reset();
     setIsSubmitting(false);
   };
@@ -260,21 +269,6 @@ export default function Contact() {
         </div>
       </section>
 
-      {/* Map Placeholder */}
-      <section className="h-80 bg-gradient-to-br from-beige via-caramel/20 to-sand/30 relative overflow-hidden">
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="text-center">
-            <MapPin className="h-12 w-12 text-gold/50 mx-auto mb-3" />
-            <p className="text-mocha/50 font-display text-xl">
-              Interactive Map
-            </p>
-            <p className="text-mocha/40 text-sm mt-1">
-              123 Craft Lane, Portland, OR 97201
-            </p>
-          </div>
-        </div>
-      </section>
-
       {/* FAQ Quick Links */}
       <section className="py-16">
         <div className="container mx-auto px-4 text-center">
@@ -292,7 +286,6 @@ export default function Contact() {
                 "Custom Orders",
                 "Care Instructions",
                 "Wholesale Inquiries",
-                "Gift Cards",
               ].map((topic) => (
                 <a
                   key={topic}

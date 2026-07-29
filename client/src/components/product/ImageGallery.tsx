@@ -1,6 +1,6 @@
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ZoomIn, X, ChevronLeft, ChevronRight } from 'lucide-react'
+import { X, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { cn, getImageUrl } from '@/lib/utils'
@@ -12,20 +12,9 @@ interface ImageGalleryProps {
 
 export function ImageGallery({ images }: ImageGalleryProps) {
   const [selectedIndex, setSelectedIndex] = useState(0)
-  const [isZoomed, setIsZoomed] = useState(false)
-  const [zoomPosition, setZoomPosition] = useState({ x: 0, y: 0 })
   const [isLightboxOpen, setIsLightboxOpen] = useState(false)
-  const mainImageRef = useRef<HTMLDivElement>(null)
 
   const selectedImage = images[selectedIndex]
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!mainImageRef.current) return
-    const rect = mainImageRef.current.getBoundingClientRect()
-    const x = ((e.clientX - rect.left) / rect.width) * 100
-    const y = ((e.clientY - rect.top) / rect.height) * 100
-    setZoomPosition({ x, y })
-  }
 
   const handlePrev = () => {
     setSelectedIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1))
@@ -47,11 +36,7 @@ export function ImageGallery({ images }: ImageGalleryProps) {
     <div className="space-y-4">
       {/* Main Image */}
       <div
-        ref={mainImageRef}
-        className="relative aspect-square overflow-hidden rounded-2xl bg-cream cursor-crosshair group"
-        onMouseMove={handleMouseMove}
-        onMouseEnter={() => setIsZoomed(true)}
-        onMouseLeave={() => setIsZoomed(false)}
+        className="relative aspect-square overflow-hidden rounded-2xl bg-cream group"
       >
         <AnimatePresence mode="wait">
           <motion.img
@@ -63,14 +48,6 @@ export function ImageGallery({ images }: ImageGalleryProps) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            style={
-              isZoomed
-                ? {
-                    transform: 'scale(2)',
-                    transformOrigin: `${zoomPosition.x}% ${zoomPosition.y}%`,
-                  }
-                : undefined
-            }
           />
         </AnimatePresence>
 
@@ -81,14 +58,6 @@ export function ImageGallery({ images }: ImageGalleryProps) {
               New
             </span>
           )}
-        </div>
-
-        {/* Zoom Indicator */}
-        <div className="absolute bottom-4 right-4 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
-          <div className="flex items-center gap-1.5 rounded-full bg-white/90 backdrop-blur-sm px-3 py-1.5 text-xs text-chocolate shadow-lg">
-            <ZoomIn className="h-3.5 w-3.5" />
-            Hover to zoom
-          </div>
         </div>
 
         {/* Navigation Arrows */}

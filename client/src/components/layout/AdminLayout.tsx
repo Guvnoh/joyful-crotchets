@@ -21,9 +21,9 @@ import {
   Menu,
   X,
   ChevronDown,
-  CircleDot,
   Activity,
 } from 'lucide-react'
+import { Logo } from '@/components/common/Logo'
 import { useAuthStore } from '@/stores/authStore'
 
 const sidebarItems = [
@@ -92,15 +92,13 @@ export function AdminLayout() {
         {/* Logo */}
         <div className="h-16 flex items-center justify-between px-4 border-b border-chocolate-200">
           <Link to="/admin" className="flex items-center gap-2">
-            <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-amber-500 to-yellow-400 flex items-center justify-center">
-              <CircleDot className="w-5 h-5 text-white" />
-            </div>
+            <Logo size="sm" />
             {isSidebarOpen && (
               <motion.span
                 initial={{ opacity: 0, width: 0 }}
                 animate={{ opacity: 1, width: 'auto' }}
                 exit={{ opacity: 0, width: 0 }}
-                className="font-cormorant text-xl font-bold text-chocolate-800 whitespace-nowrap overflow-hidden"
+                className="font-cormorant text-xl font-bold text-chocolate whitespace-nowrap overflow-hidden"
               >
                 Joyful Admin
               </motion.span>

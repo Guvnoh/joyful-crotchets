@@ -1,13 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
   <defs>
-    <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#C9A94E"/>
-      <stop offset="100%" style="stop-color:#B8956A"/>
+    <linearGradient id="mocha" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#7A6B5D"/>
+      <stop offset="100%" style="stop-color:#2D2926"/>
     </linearGradient>
   </defs>
-  <circle cx="16" cy="16" r="14" fill="url(#gold)"/>
-  <path d="M12 8c0 0 2 4 2 8s-2 8-2 8" stroke="#FFF8F0" stroke-width="2" fill="none" stroke-linecap="round"/>
-  <path d="M16 12c-2 0-4 2-4 4s2 4 4 4" stroke="#FFF8F0" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-  <circle cx="20" cy="14" r="1" fill="#FFF8F0" opacity="0.8"/>
-  <circle cx="18" cy="20" r="0.8" fill="#FFF8F0" opacity="0.6"/>
+  <circle cx="16" cy="16" r="14" fill="url(#mocha)"/>
+  <circle cx="16" cy="16" r="12" stroke="#EDE8E0" stroke-width="1" fill="none"/>
+  <path d="M11 9c0 0 2.5 3.5 2.5 7s-2.5 7-2.5 7" stroke="#EDE8E0" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+  <path d="M15 11.5c-1.8 0-3.5 1.5-3.5 3.5s1.7 3.5 3.5 3.5" stroke="#EDE8E0" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <circle cx="19" cy="11" r="1" fill="#EDE8E0" opacity="0.8"/>
+  <circle cx="17.5" cy="17" r="0.8" fill="#EDE8E0" opacity="0.6"/>
 </svg>

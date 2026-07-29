@@ -127,7 +127,7 @@ export default function AdminSettings() {
                   <Input
                     value={formData.storeName || ''}
                     onChange={(e) => updateField('storeName', e.target.value)}
-                    placeholder="Joyful Crotchets"
+                    placeholder="Joyful Crochets"
                   />
                 </div>
                 <div>
@@ -269,7 +269,7 @@ export default function AdminSettings() {
                 <Input
                   value={formData.seoTitle || ''}
                   onChange={(e) => updateField('seoTitle', e.target.value)}
-                  placeholder="Joyful Crotchets - Premium Handmade Crochet"
+                  placeholder="Joyful Crochets - Premium Handmade Crochet"
                 />
               </div>
               <div>

@@ -12,8 +12,8 @@ import {
   LogOut,
   Settings,
   Package,
-  CircleDot,
 } from 'lucide-react'
+import { Logo } from '@/components/common/Logo'
 import { useAuthStore } from '@/stores/authStore'
 import { useCartStore } from '@/stores/cartStore'
 import { useWishlistStore } from '@/stores/wishlistStore'
@@ -138,11 +138,9 @@ export function Navbar() {
           <div className="flex items-center justify-between h-20">
             {/* Logo */}
             <Link to="/" className="flex items-center gap-2 group">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-500 to-yellow-400 flex items-center justify-center shadow-lg group-hover:shadow-amber-200 transition-shadow">
-                <CircleDot className="w-5 h-5 text-white" />
-              </div>
-              <span className="font-cormorant text-2xl font-bold text-chocolate-800 group-hover:text-amber-700 transition-colors">
-                Joyful Crotchets
+              <Logo size="md" />
+              <span className="font-cormorant text-2xl font-bold text-chocolate group-hover:text-gold transition-colors">
+                Joyful Crochets
               </span>
             </Link>
 
@@ -364,11 +362,9 @@ export function Navbar() {
               <div className="p-6">
                 <div className="flex items-center justify-between mb-8">
                   <Link to="/" className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-500 to-yellow-400 flex items-center justify-center">
-                      <CircleDot className="w-4 h-4 text-white" />
-                    </div>
-                    <span className="font-cormorant text-xl font-bold text-chocolate-800">
-                      Joyful Crotchets
+                    <Logo size="sm" />
+                    <span className="font-cormorant text-xl font-bold text-chocolate">
+                      Joyful Crochets
                     </span>
                   </Link>
                   <button

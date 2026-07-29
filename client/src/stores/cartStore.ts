@@ -130,7 +130,7 @@ export const useCartStore = create<CartState>()(
         try {
           const { data } = await api.post('/cart/coupon', { code })
           set({ couponCode: code, discount: data.data.discount })
-          toast.success(`Coupon "${code}" applied! You save $${data.data.discount.toFixed(2)}`)
+          toast.success(`Coupon "${code}" applied! You save ₦${data.data.discount.toFixed(2)}`)
         } catch (error: any) {
           toast.error(error.response?.data?.message || 'Invalid coupon code')
           throw error
