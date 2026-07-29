@@ -36,14 +36,19 @@ import { slugify, generateOrderNumber } from '@/lib/utils'
 import api from '@/services/api'
 import toast from 'react-hot-toast'
 
+const safeNumber = z.preprocess(
+  (val) => (val === '' || val === undefined || val === null || (typeof val === 'number' && isNaN(val)) ? undefined : val),
+  z.number().optional()
+)
+
 const productSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   description: z.string().min(1, 'Description is required'),
   shortDescription: z.string().optional(),
   category: z.string().min(1, 'Category is required'),
   price: z.number().min(0.01, 'Price must be greater than 0'),
-  compareAtPrice: z.number().optional(),
-  costPrice: z.number().optional(),
+  compareAtPrice: safeNumber,
+  costPrice: safeNumber,
   sku: z.string().optional(),
   stock: z.number().min(0, 'Stock cannot be negative'),
   isPublished: z.boolean(),
@@ -53,16 +58,28 @@ const productSchema = z.object({
   tags: z.string().optional(),
   estimatedDelivery: z.string().optional(),
   careInstructions: z.string().optional(),
-  colors: z.array(z.object({
-    name: z.string().min(1),
-    hex: z.string().min(1),
-    inStock: z.boolean(),
-  })).optional(),
-  sizes: z.array(z.object({
-    name: z.string().min(1),
-    price: z.number().min(0),
-    inStock: z.boolean(),
-  })).optional(),
+  colors: z.preprocess(
+    (colors) => {
+      if (!colors || !Array.isArray(colors)) return colors;
+      return colors.filter((c: any) => c && c.name && String(c.name).trim() !== '');
+    },
+    z.array(z.object({
+      name: z.string().min(1),
+      hex: z.string().min(1),
+      inStock: z.boolean(),
+    })).optional()
+  ),
+  sizes: z.preprocess(
+    (sizes) => {
+      if (!sizes || !Array.isArray(sizes)) return sizes;
+      return sizes.filter((s: any) => s && s.name && String(s.name).trim() !== '');
+    },
+    z.array(z.object({
+      name: z.string().min(1, 'Size name is required'),
+      price: z.number().min(0),
+      inStock: z.boolean(),
+    })).optional()
+  ),
   materials: z.array(z.string()).optional(),
   dimensions: z.object({
     length: z.number().optional(),
@@ -709,7 +726,7 @@ export default function AdminProductForm() {
                       className="flex-1"
                     />
                     <Input
-                      {...register(`sizes.${index}.price`)}
+                      {...register(`sizes.${index}.price`, { valueAsNumber: true })}
                       type="number"
                       step="0.01"
                       placeholder="Price"
