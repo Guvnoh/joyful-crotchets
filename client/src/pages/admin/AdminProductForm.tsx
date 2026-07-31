@@ -388,8 +388,14 @@ export default function AdminProductForm() {
         toast.success('Product created successfully')
       }
       navigate('/admin/products')
-    } catch {
-      toast.error(isEditing ? 'Failed to update product' : 'Failed to create product')
+    } catch (error: any) {
+      const serverMessage = error?.response?.data?.error || error?.response?.data?.message || error?.message || 'Unknown error occurred'
+      toast.error(
+        <div>
+          <div className="font-semibold">{isEditing ? 'Failed to update product' : 'Failed to create product'}</div>
+          <div className="text-sm opacity-80">{serverMessage}</div>
+        </div>
+      )
     }
   }
 
